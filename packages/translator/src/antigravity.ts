@@ -875,7 +875,10 @@ export const COMPETITIVE_AGENT_PROMPT_PATTERNS: RegExp[] = [
     /\byou are a claude agent\b[^.\n]*\.?\s*/i,
     /\bbuilt on anthropic's claude agent sdk\b[^.\n]*\.?\s*/i,
     /\byou are claude code\b[^.\n]*\.?\s*/i,
-    /\byou are an ai assistant created by anthropic\b[^.\n]*\.?\s*/i
+    /\byou are an ai assistant created by anthropic\b[^.\n]*\.?\s*/i,
+    /\byou are hermes agent\b[^.\n]*\.?\s*/i,
+    /\bhermes agent, built by nous research\b[^.\n]*\.?\s*/i,
+    /\bnous research\b/i
 ];
 
 export function stripCompetitiveAgentPrompts(text: string): string {
