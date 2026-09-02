@@ -54,41 +54,35 @@ export function AppSidebar() {
                             render={<Link to="/" aria-label="GusRouter dashboard" />}
                             className="group h-10 w-full rounded-lg px-2 text-foreground transition-all duration-150 hover:bg-secondary/60 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0! cursor-pointer"
                         >
-                            {/* Logo Mark: Double-bezel Machined Emblem with Beacon */}
-                            <div className="relative flex size-7.5 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-linear-to-b from-secondary/90 via-secondary/50 to-background p-1 text-foreground shadow-2xs transition-all duration-200 group-hover:border-foreground/30 group-hover:bg-secondary/80">
+                            {/* Logo Mark: Anthropic Radial Spike / Editorial Emblem */}
+                            <div className="relative flex size-7.5 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-primary text-primary-foreground p-1 shadow-2xs transition-all duration-200 group-hover:bg-primary-active">
                                 <svg
                                     viewBox="0 0 24 24"
-                                    fill="none"
-                                    className="size-4 text-foreground transition-transform duration-200 group-hover:scale-105"
+                                    fill="currentColor"
+                                    className="size-4.5 transition-transform duration-200 group-hover:scale-105"
                                 >
-                                    <path
-                                        d="M13 2.5L5 13H11.5L9.5 21.5L18.5 10H12L13.5 2.5Z"
-                                        fill="currentColor"
-                                        fillOpacity="0.92"
-                                        stroke="currentColor"
-                                        strokeWidth="0.5"
-                                        strokeLinejoin="round"
-                                    />
+                                    {/* Anthropic 4-spoke signature asterisk spike */}
+                                    <path d="M12 2C12.5 7 17 11.5 22 12C17 12.5 12.5 17 12 22C11.5 17 7 12.5 2 12C7 11.5 11.5 7 12 2Z" />
                                 </svg>
                                 <span
-                                    className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full border border-background bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]"
+                                    className="absolute -right-0.5 -top-0.5 size-2 rounded-full border-2 border-background bg-emerald-500 shadow-[0_0_6px_rgba(93,184,114,0.6)]"
                                     title="Gateway Online"
                                     aria-hidden="true"
                                 />
                             </div>
 
                             {/* Label & Tactical Subtitle */}
-                            <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden text-left pl-1">
+                            <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden text-left pl-1.5">
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-[13px] font-bold tracking-tight text-foreground leading-tight">
+                                    <span className="text-[15px] font-serif font-medium tracking-tight text-foreground leading-tight">
                                         GusRouter
                                     </span>
-                                    <span className="rounded-xs border border-border/70 bg-secondary/70 px-1 py-0.2 font-mono text-[8px] font-semibold text-muted-foreground/80 leading-none">
-                                        MESH
+                                    <span className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.2 text-[9px] font-sans font-medium text-primary leading-none">
+                                        Claude
                                     </span>
                                 </div>
-                                <span className="text-[9px] font-mono font-medium text-muted-foreground/75 tracking-[0.14em] uppercase mt-0.5 truncate">
-                                    Gateway Proxy
+                                <span className="text-[10px] font-sans font-normal text-muted-foreground tracking-wide mt-0.5 truncate">
+                                    Editorial AI Gateway
                                 </span>
                             </div>
                         </SidebarMenuButton>

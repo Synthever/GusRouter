@@ -5,9 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --font-heading:
-        "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-serif: "Copernicus", "Tiempos Headline", "Cormorant Garamond", Garamond, Georgia, serif;
+    --font-heading: "Copernicus", "Tiempos Headline", "Cormorant Garamond", Garamond, Georgia, serif;
     --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --color-accent: var(--accent);
     --color-accent-2: var(--accent-2);
@@ -22,18 +22,23 @@ body,
 }
 
 body {
-    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    letter-spacing: -0.015em;
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
 }
 
 h1,
 h2,
-h3,
+h3 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.025em;
+    font-weight: 500;
+}
+
 h4,
 h5,
 h6 {
-    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    letter-spacing: -0.025em;
+    font-family: var(--font-sans);
+    letter-spacing: -0.015em;
 }
 
 code,
@@ -45,9 +50,9 @@ samp,
 }
 
 @theme inline {
-    --font-sans: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --font-heading:
-        "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-serif: "Copernicus", "Tiempos Headline", "Cormorant Garamond", Garamond, Georgia, serif;
+    --font-heading: "Copernicus", "Tiempos Headline", "Cormorant Garamond", Garamond, Georgia, serif;
     --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -76,105 +81,107 @@ samp,
     --color-foreground: var(--foreground);
     --color-background: var(--background);
     --radius-sm: 0.25rem;
-    --radius-md: 0.375rem;
-    --radius-lg: 0.5rem;
-    --radius-xl: 0.75rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
 }
 
 :root {
-    --background: oklch(0.99 0 0);
-    --foreground: oklch(0.13 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.13 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.13 0 0);
-    --primary: oklch(0.13 0 0);
-    --primary-foreground: oklch(0.99 0 0);
-    --secondary: oklch(0.96 0 0);
-    --secondary-foreground: oklch(0.13 0 0);
-    --muted: oklch(0.55 0 0);
-    --muted-foreground: oklch(0.52 0 0);
-    --accent: oklch(0.13 0 0);
-    --accent-2: oklch(0.3 0 0);
-    --surface: oklch(0.99 0 0);
-    --surface-2: oklch(0.96 0 0);
-    --accent-foreground: oklch(0.99 0 0);
-    --destructive: oklch(0.55 0.22 25);
-    --border: oklch(0.91 0 0);
-    --input: oklch(0.91 0 0);
-    --ring: oklch(0.13 0 0);
-    --radius: 0.375rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.13 0 0);
-    --sidebar-primary: oklch(0.13 0 0);
-    --sidebar-primary-foreground: oklch(0.99 0 0);
-    --sidebar-accent: oklch(0.95 0 0);
-    --sidebar-accent-foreground: oklch(0.13 0 0);
-    --sidebar-border: oklch(0.92 0 0);
-    --sidebar-ring: oklch(0.13 0 0);
+    /* Claude Warm Cream System */
+    --background: #faf9f5;
+    --foreground: #141413;
+    --card: #efe9de;
+    --card-foreground: #141413;
+    --popover: #faf9f5;
+    --popover-foreground: #141413;
+    --primary: #cc785c;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f0e8;
+    --secondary-foreground: #252523;
+    --muted: #e6dfd8;
+    --muted-foreground: #6c6a64;
+    --accent: #cc785c;
+    --accent-2: #e8a55a;
+    --surface: #faf9f5;
+    --surface-2: #f5f0e8;
+    --accent-foreground: #ffffff;
+    --destructive: #c64545;
+    --border: #e6dfd8;
+    --input: #e6dfd8;
+    --ring: #cc785c;
+    --radius: 0.5rem;
+    --sidebar: #f5f0e8;
+    --sidebar-foreground: #141413;
+    --sidebar-primary: #cc785c;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e8e0d2;
+    --sidebar-accent-foreground: #141413;
+    --sidebar-border: #e6dfd8;
+    --sidebar-ring: #cc785c;
 
-    /* Beautiful UI Tokens */
-    --canvas: oklch(0.985 0 0);
-    --field: oklch(0.95 0 0);
-    --line: oklch(0.9 0 0);
-    --line-strong: oklch(0.65 0 0);
-    --ink: oklch(0.13 0 0);
-    --ink-2: oklch(0.38 0 0);
-    --ink-3: oklch(0.55 0 0);
-    --hover: oklch(0.94 0 0);
-    --hover-2: oklch(0.91 0 0);
-    --green: #1f7a5f;
-    --green-tint: rgba(31, 122, 95, 0.12);
+    /* Editorial Tokens */
+    --canvas: #faf9f5;
+    --field: #f5f0e8;
+    --line: #e6dfd8;
+    --line-strong: #8e8b82;
+    --ink: #141413;
+    --ink-2: #3d3d3a;
+    --ink-3: #6c6a64;
+    --hover: #efe9de;
+    --hover-2: #e8e0d2;
+    --green: #5db872;
+    --green-tint: rgba(93, 184, 114, 0.15);
 
-    /* Analytics chart hues — theme-independent data-viz colors */
-    --chart-input: oklch(0.65 0.18 245);
-    --chart-output: oklch(0.72 0.18 150);
-    --chart-cached: oklch(0.78 0.16 75);
+    /* Analytics chart hues */
+    --chart-input: #cc785c;
+    --chart-output: #5db8a6;
+    --chart-cached: #e8a55a;
 }
 
 .dark {
-    --background: oklch(0.11 0 0);
-    --foreground: oklch(0.94 0 0);
-    --card: oklch(0.14 0 0);
-    --card-foreground: oklch(0.94 0 0);
-    --popover: oklch(0.14 0 0);
-    --popover-foreground: oklch(0.94 0 0);
-    --primary: oklch(0.94 0 0);
-    --primary-foreground: oklch(0.11 0 0);
-    --secondary: oklch(0.17 0 0);
-    --secondary-foreground: oklch(0.94 0 0);
-    --muted: oklch(0.55 0 0);
-    --muted-foreground: oklch(0.55 0 0);
-    --accent: oklch(0.94 0 0);
-    --accent-2: oklch(0.7 0 0);
-    --surface: oklch(0.14 0 0);
-    --surface-2: oklch(0.17 0 0);
-    --accent-foreground: oklch(0.11 0 0);
-    --destructive: oklch(0.6 0.2 25);
-    --border: oklch(0.22 0 0);
-    --input: oklch(0.22 0 0);
-    --ring: oklch(0.94 0 0);
-    --sidebar: oklch(0.12 0 0);
-    --sidebar-foreground: oklch(0.94 0 0);
-    --sidebar-primary: oklch(0.94 0 0);
-    --sidebar-primary-foreground: oklch(0.11 0 0);
-    --sidebar-accent: oklch(0.18 0 0);
-    --sidebar-accent-foreground: oklch(0.94 0 0);
-    --sidebar-border: oklch(0.2 0 0);
-    --sidebar-ring: oklch(0.94 0 0);
+    /* Claude Dark Product Surface */
+    --background: #181715;
+    --foreground: #faf9f5;
+    --card: #1f1e1b;
+    --card-foreground: #faf9f5;
+    --popover: #252320;
+    --popover-foreground: #faf9f5;
+    --primary: #cc785c;
+    --primary-foreground: #ffffff;
+    --secondary: #252320;
+    --secondary-foreground: #faf9f5;
+    --muted: #2d2b27;
+    --muted-foreground: #a09d96;
+    --accent: #cc785c;
+    --accent-2: #e8a55a;
+    --surface: #1f1e1b;
+    --surface-2: #252320;
+    --accent-foreground: #ffffff;
+    --destructive: #c64545;
+    --border: #2d2b27;
+    --input: #2d2b27;
+    --ring: #cc785c;
+    --sidebar: #141413;
+    --sidebar-foreground: #faf9f5;
+    --sidebar-primary: #cc785c;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #252320;
+    --sidebar-accent-foreground: #faf9f5;
+    --sidebar-border: #252320;
+    --sidebar-ring: #cc785c;
 
-    /* Beautiful UI Dark Tokens */
-    --canvas: oklch(0.11 0 0);
-    --field: oklch(0.16 0 0);
-    --line: oklch(0.22 0 0);
-    --line-strong: oklch(0.42 0 0);
-    --ink: oklch(0.94 0 0);
-    --ink-2: oklch(0.72 0 0);
-    --ink-3: oklch(0.52 0 0);
-    --hover: oklch(0.18 0 0);
-    --hover-2: oklch(0.22 0 0);
-    --green: #2ecc71;
-    --green-tint: rgba(46, 204, 113, 0.15);
+    /* Editorial Dark Tokens */
+    --canvas: #181715;
+    --field: #1f1e1b;
+    --line: #2d2b27;
+    --line-strong: #6c6a64;
+    --ink: #faf9f5;
+    --ink-2: #dcd8cf;
+    --ink-3: #a09d96;
+    --hover: #252320;
+    --hover-2: #2d2b27;
+    --green: #5db872;
+    --green-tint: rgba(93, 184, 114, 0.15);
 }
 
 @layer base {
