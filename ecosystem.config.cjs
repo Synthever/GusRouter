@@ -11,7 +11,7 @@ module.exports = {
         DATABASE_PATH: "/root/.gusrouter/gusrouter.db",
         DATA_DIR: "/root/.gusrouter",
         RTK_ENABLED: "true",
-        SROUTER_CORS_ORIGINS: "https://gorouter.rkhyg.xyz,http://gorouter.rkhyg.xyz"
+        SROUTER_CORS_ORIGINS: "https://gusrouter.rkhyg.xyz,http://gusrouter.rkhyg.xyz,https://gorouter.rkhyg.xyz,http://gorouter.rkhyg.xyz"
       }
     }
   ]

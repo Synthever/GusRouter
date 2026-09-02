@@ -44,7 +44,8 @@ app.use("/*", async (c, next) => {
 
 // CORS: loopback origins always pass; public origins require SROUTER_CORS_ORIGINS.
 const CorsAllowlist = ParseAllowedOrigins(
-    process.env.SROUTER_CORS_ORIGINS || "https://gorouter.rkhyg.xyz,http://gorouter.rkhyg.xyz"
+    process.env.SROUTER_CORS_ORIGINS ||
+        "https://gusrouter.rkhyg.xyz,http://gusrouter.rkhyg.xyz,https://gorouter.rkhyg.xyz,http://gorouter.rkhyg.xyz"
 );
 app.use("/*", CreateCorsMiddleware(CorsAllowlist));
 

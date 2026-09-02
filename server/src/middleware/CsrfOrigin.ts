@@ -40,6 +40,7 @@ export function CreateCsrfOriginGuard(Allowlist: Set<string>): MiddlewareHandler
         if (
             OriginUrl.host === RequestHost ||
             (ForwardedHost && OriginUrl.host === ForwardedHost) ||
+            OriginUrl.host === "gusrouter.rkhyg.xyz" ||
             OriginUrl.host === "gorouter.rkhyg.xyz"
         ) {
             return next();
