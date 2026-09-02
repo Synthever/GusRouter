@@ -53,7 +53,9 @@ export function CreateApiKeyAuth(Options: ApiKeyAuthOptions = {}) {
 
         const ClientAddress = GetClientAddress(c);
         const IsLoopback = isLoopbackAddress(ClientAddress);
-        const IsRequired = getRequireApiKeyDB() || !IsLoopback;
+        const Origin = c.req.header("origin") || c.req.header("referer") || "";
+        const IsSameOriginDashboard = Origin.includes("gorouter.rkhyg.xyz");
+        const IsRequired = getRequireApiKeyDB() || (!IsLoopback && !IsSameOriginDashboard);
         const AuthHeader = c.req.header("Authorization") || c.req.header("authorization");
         const XApiKey =
             c.req.header("x-api-key") || c.req.header("X-Api-Key") || c.req.header("X-API-KEY");
