@@ -180,7 +180,11 @@ export function ConnectOAuthModal({ provider, open, onOpenChange }: ConnectOAuth
                     : baseId === "qoder"
                       ? "/v1/auth/qoder/callback"
                       : "/v1/auth/openai/callback";
-            return api.post(endpoint, payload);
+            return api.post(endpoint, {
+                callbackUrl: payload.callbackUrl,
+                callback_url: payload.callbackUrl,
+                url: payload.callbackUrl
+            });
         },
         onSuccess: () => {
             if (popupRef.current && !popupRef.current.closed) {

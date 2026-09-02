@@ -47,17 +47,24 @@ async function CallbackFor(
     c: Context
 ): Promise<Response> {
     const rawBody = c.req.method === "POST" ? await c.req.json().catch(() => null) : null;
-    const body = OAuthCallbackBodySchema.safeParse(rawBody).data;
+    const body = (rawBody as Record<string, unknown>) || {};
 
-    let code = c.req.query("code") ?? body?.code;
-    let state = c.req.query("state") ?? body?.state;
+    let code = (c.req.query("code") ?? body?.code) as string | undefined;
+    let state = (c.req.query("state") ?? body?.state) as string | undefined;
 
-    if (body?.callback_url) {
+    const rawUrl = (body?.callbackUrl || body?.callback_url || body?.url) as string | undefined;
+    if (rawUrl) {
         try {
-            const url = new URL(body.callback_url);
-            code = code ?? url.searchParams.get("code") ?? undefined;
-            state = state ?? url.searchParams.get("state") ?? undefined;
-        } catch {}
+            const parsedUrl = new URL(rawUrl);
+            code = code ?? parsedUrl.searchParams.get("code") ?? undefined;
+            state = state ?? parsedUrl.searchParams.get("state") ?? undefined;
+        } catch {
+            // If URL parse fails, try regex matching for code and state
+            const codeMatch = rawUrl.match(/[?&]code=([^&]+)/);
+            const stateMatch = rawUrl.match(/[?&]state=([^&]+)/);
+            if (codeMatch && codeMatch[1]) code = code ?? decodeURIComponent(codeMatch[1]);
+            if (stateMatch && stateMatch[1]) state = state ?? decodeURIComponent(stateMatch[1]);
+        }
     }
 
     if (!code || !state) {
