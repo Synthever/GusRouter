@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.turbo/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.log
+jwt-secret
+machine-id
+gorouter-backend
+gorouter-gateway
+backend/9router-go
+backend/gorouter-backend
+gateway/gorouter-gateway
+.env
+.DS_Store

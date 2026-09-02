@@ -1,0 +1,12 @@
+{
+  "name": "gorouter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:frontend": "pnpm --filter web build",
+    "build": "pnpm --filter web build"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
