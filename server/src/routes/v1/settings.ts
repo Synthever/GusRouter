@@ -14,6 +14,7 @@ SettingsRouter.get("/settings/fallbacks", ApiKeyAuth, FallbacksController.GetFal
 // Mutations require an authenticated admin session
 SettingsRouter.patch("/settings", RequireAdmin, SettingsController.UpdateSettings);
 SettingsRouter.post("/settings", RequireAdmin, SettingsController.UpdateSettings);
+SettingsRouter.post("/settings/import", ApiKeyAuth, SettingsController.ImportBackup);
 SettingsRouter.patch("/settings/token-saver", RequireAdmin, TokenSaverController.UpdateSettings);
 SettingsRouter.put("/settings/token-saver", RequireAdmin, TokenSaverController.UpdateSettings);
 SettingsRouter.post("/settings/token-saver/test", RequireAdmin, TokenSaverController.Preview);

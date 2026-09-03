@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { APP_VERSION } from "@srouter/constants";
+import { api } from "@/lib/api";
 
 export interface AppSettings {
     // Appearance
@@ -108,21 +109,72 @@ export function useSettings() {
         toast.success("Settings configuration exported as JSON");
     }, [settings]);
 
-    const importSettings = useCallback((jsonString: string): boolean => {
+    const importSettings = useCallback(async (jsonString: string): Promise<boolean> => {
         try {
             const parsed = JSON.parse(jsonString);
+
+            // Check if this is a full 9router/GusRouter system backup (has providerConnections, apiKeys, combos, or customModels)
+            const isFullBackup =
+                Array.isArray(parsed.providerConnections) ||
+                Array.isArray(parsed.connections) ||
+                Array.isArray(parsed.apiKeys) ||
+                Array.isArray(parsed.combos) ||
+                Array.isArray(parsed.customModels) ||
+                Array.isArray(parsed.providerNodes);
+
+            if (isFullBackup) {
+                try {
+                    const res = await api.post<{
+                        message?: string;
+                        stats?: {
+                            connectionsImported: number;
+                            apiKeysImported: number;
+                            combosImported: number;
+                            customModelsImported: number;
+                            settingsImported: boolean;
+                        };
+                    }>("/v1/settings/import", parsed);
+
+                    const stats = res?.stats;
+                    let desc = "Backup restored into database.";
+                    if (stats) {
+                        const parts = [];
+                        if (stats.connectionsImported > 0) parts.push(`${stats.connectionsImported} connections`);
+                        if (stats.apiKeysImported > 0) parts.push(`${stats.apiKeysImported} keys`);
+                        if (stats.combosImported > 0) parts.push(`${stats.combosImported} combo rules`);
+                        if (stats.customModelsImported > 0) parts.push(`${stats.customModelsImported} custom models`);
+                        if (parts.length > 0) desc = `Imported ${parts.join(", ")}.`;
+                    }
+                    toast.success("Full system backup imported successfully", {
+                        description: desc
+                    });
+                } catch (apiErr) {
+                    console.error("Backend backup import failed", apiErr);
+                    toast.error("Failed to import backup to database", {
+                        description: apiErr instanceof Error ? apiErr.message : "Unknown error"
+                    });
+                    return false;
+                }
+            }
+
+            // Also check and update client app settings if present
             const importedSettings =
-                parsed.settings && typeof parsed.settings === "object" ? parsed.settings : parsed;
+                parsed.settings && typeof parsed.settings === "object" ? parsed.settings : (!isFullBackup ? parsed : null);
 
-            // Merge with defaults to ensure all required keys exist
-            const validated: AppSettings = {
-                ...DEFAULT_SETTINGS,
-                ...importedSettings
-            };
+            if (importedSettings) {
+                // Merge with defaults to ensure all required keys exist
+                const validated: AppSettings = {
+                    ...DEFAULT_SETTINGS,
+                    ...importedSettings
+                };
 
-            setSettings(validated);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(validated));
-            toast.success("Settings imported successfully");
+                setSettings(validated);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(validated));
+                if (!isFullBackup) {
+                    toast.success("Settings imported successfully");
+                }
+            }
+
             return true;
         } catch (err) {
             console.error("Failed to parse settings JSON", err);

@@ -44,7 +44,12 @@ const KNOWN_PROVIDER_IDS_DESC = Object.freeze(
 
 const LEGACY_ALIAS_MAP: Readonly<Record<string, string>> = Object.freeze({
     claude: "claude",
-    cbai: "codebuddy"
+    cbai: "codebuddy",
+    codex: "openai_codex",
+    cx: "openai_codex",
+    openai: "openai_codex",
+    kr: "kiro",
+    ag: "antigravity"
 });
 
 export function providerById(Id: string): ProviderMetadata | undefined {

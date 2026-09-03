@@ -103,13 +103,14 @@ export function loadSavedProvidersFromDB(): void {
 
         const providerType = p.providerId || p.id;
         const baseUrl = p.base_url;
-        registry.setRoundRobin(providerBaseId(p.id), getRoundRobinDB(providerBaseId(p.id)));
+        const baseId = providerBaseId(p.providerId || p.id);
+        registry.setRoundRobin(baseId, getRoundRobinDB(baseId));
 
         switch (true) {
-            case isProviderBaseId(p.id, "kiro"):
+            case isProviderBaseId(p.providerId || p.id, "kiro"):
                 registry.registerProvider(
                     new KiroExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl,
                         apiKey: p.apiKey,
@@ -119,10 +120,10 @@ export function loadSavedProvidersFromDB(): void {
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "codebuddy"):
+            case isProviderBaseId(p.providerId || p.id, "codebuddy"):
                 registry.registerProvider(
                     new CodeBuddyExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl:
                             baseUrl ||
@@ -142,21 +143,21 @@ export function loadSavedProvidersFromDB(): void {
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "commandcode"):
+            case isProviderBaseId(p.providerId || p.id, "commandcode"):
                 registry.registerProvider(
                     new CommandCodeExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "antigravity"):
+            case isProviderBaseId(p.providerId || p.id, "antigravity"):
                 registry.registerProvider(
                     new AntigravityExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl,
                         apiKey: p.apiKey,
@@ -165,10 +166,10 @@ export function loadSavedProvidersFromDB(): void {
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "openai_codex"):
+            case isProviderBaseId(p.providerId || p.id, "openai_codex") || isProviderBaseId(p.providerId || p.id, "codex"):
                 registry.registerProvider(
                     new CodexExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl,
                         apiKey: p.apiKey,
@@ -178,100 +179,100 @@ export function loadSavedProvidersFromDB(): void {
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "neosantara"):
+            case isProviderBaseId(p.providerId || p.id, "neosantara"):
                 registry.registerProvider(
                     new OpenAIExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl: baseUrl || NEOSANTARA_BASE_URL,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "gorouter"):
+            case isProviderBaseId(p.providerId || p.id, "gorouter"):
                 registry.registerProvider(
                     new GoRouterExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl: baseUrl || GOROUTER_BASE_URL,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "bluesminds"):
+            case isProviderBaseId(p.providerId || p.id, "bluesminds"):
                 registry.registerProvider(
                     new BluesMindsExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl: baseUrl || BLUESMINDS_BASE_URL,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "seekai"):
+            case isProviderBaseId(p.providerId || p.id, "seekai"):
                 registry.registerProvider(
                     new SeekAIExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl: baseUrl || SEEKAI_BASE_URL,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "tabitoken"):
+            case isProviderBaseId(p.providerId || p.id, "tabitoken"):
                 registry.registerProvider(
                     new TabiTokenExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl: baseUrl || TABITOKEN_BASE_URL,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "tokenrouter"):
+            case isProviderBaseId(p.providerId || p.id, "tokenrouter"):
                 registry.registerProvider(
                     new TokenRouterExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl: baseUrl || TOKENROUTER_BASE_URL,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "opencode_zen") ||
-                isProviderBaseId(p.id, "zen") ||
+            case isProviderBaseId(p.providerId || p.id, "opencode_zen") ||
+                isProviderBaseId(p.providerId || p.id, "zen") ||
                 providerType === "opencode_zen":
                 registry.registerProvider(
                     new OpenCodeZenExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl: baseUrl || OPENCODE_ZEN_BASE_URL,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "bai") || providerType === "bai":
+            case isProviderBaseId(p.providerId || p.id, "bai") || providerType === "bai":
                 registry.registerProvider(
                     new BAIExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl: baseUrl || BAI_BASE_URL,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
-            case isProviderBaseId(p.id, "qoder"):
+            case isProviderBaseId(p.providerId || p.id, "qoder"):
                 registry.registerProvider(
                     new QoderExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl,
                         apiKey: p.apiKey,
@@ -281,25 +282,10 @@ export function loadSavedProvidersFromDB(): void {
                     })
                 );
                 break;
-            case p.protocol === "openai" ||
-                p.category === "oauth" ||
-                providerType === "openai_codex" ||
-                providerType === "openai" ||
-                providerType === "custom_openai":
-                registry.registerProvider(
-                    new OpenAIExecutor({
-                        id: p.id || p.providerId,
-                        name: p.name,
-                        baseUrl,
-                        apiKey: p.apiKey,
-                        accessToken: p.accessToken
-                    })
-                );
-                break;
-            case isProviderBaseId(p.id, "claude") || providerType === "claude":
+            case isProviderBaseId(p.providerId || p.id, "claude") || providerType === "claude":
                 registry.registerProvider(
                     new AnthropicExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl,
                         apiKey: p.apiKey,
@@ -314,15 +300,24 @@ export function loadSavedProvidersFromDB(): void {
                 providerType === "custom_anthropic":
                 registry.registerProvider(
                     new AnthropicExecutor({
-                        id: p.id || p.providerId,
+                        id: p.id,
                         name: p.name,
                         baseUrl,
-                        apiKey: p.apiKey,
+                        apiKey: p.apiKey || undefined,
                         accessToken: p.accessToken
                     })
                 );
                 break;
             default:
+                registry.registerProvider(
+                    new OpenAIExecutor({
+                        id: p.id,
+                        name: p.name,
+                        baseUrl,
+                        apiKey: p.apiKey || undefined,
+                        accessToken: p.accessToken
+                    })
+                );
                 break;
         }
     }

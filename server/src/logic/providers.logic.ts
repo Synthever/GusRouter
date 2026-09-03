@@ -48,6 +48,8 @@ const PROVIDER_IDS_BY_LENGTH = Object.keys(DEFAULT_PROVIDER_MAP).sort(
 );
 
 function BaseIdOf(ProviderId: string): string {
+    if (ProviderId === "codex") return "openai_codex";
+    if (ProviderId === "cbai") return "codebuddy";
     for (const Id of PROVIDER_IDS_BY_LENGTH) {
         if (
             ProviderId === Id ||

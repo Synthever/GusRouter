@@ -60,6 +60,77 @@ function mapAPIKeyRow(row: APIKeyRow): APIKeyZod {
     };
 }
 
+export function upsertAPIKeyDB(data: {
+    id?: string;
+    key?: string;
+    name: string;
+    enabled?: boolean;
+    rate_limit?: number;
+    quota_limit?: number;
+    credit_limit?: number;
+    usage_tokens?: number;
+    usage_cost?: number;
+    rateLimit?: number;
+    quotaLimit?: number;
+    creditLimit?: number;
+    allowed_models?: string[] | null;
+    created_at?: number;
+}): APIKeyZod {
+    const Id = data.id || generateId("key");
+    const Key = data.key || `sr-live-${randomUUID().replace(/-/g, "").slice(0, 16)}`;
+    const CreatedAt = data.created_at || Date.now();
+    const AllowedModels =
+        data.allowed_models && data.allowed_models.length > 0 ? data.allowed_models : null;
+    const AllowedModelsJson = AllowedModels ? JSON.stringify(AllowedModels) : null;
+    const RateLimit = data.rate_limit ?? data.rateLimit ?? 0;
+    const QuotaLimit = data.quota_limit ?? data.quotaLimit ?? 0;
+    const CreditLimit = data.credit_limit ?? data.creditLimit ?? 0;
+    const UsageTokens = data.usage_tokens ?? 0;
+    const UsageCost = data.usage_cost ?? 0;
+    const Enabled = data.enabled !== undefined ? (data.enabled ? 1 : 0) : 1;
+
+    const Query = db.prepare(`
+        INSERT INTO api_keys (id, key, name, enabled, rate_limit, quota_limit, usage_tokens, credit_limit, usage_cost, allowed_models, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            key = excluded.key,
+            name = excluded.name,
+            enabled = excluded.enabled,
+            rate_limit = excluded.rate_limit,
+            quota_limit = excluded.quota_limit,
+            credit_limit = excluded.credit_limit,
+            allowed_models = excluded.allowed_models;
+    `);
+
+    Query.run(
+        Id,
+        Key,
+        data.name,
+        Enabled,
+        RateLimit,
+        QuotaLimit,
+        UsageTokens,
+        CreditLimit,
+        UsageCost,
+        AllowedModelsJson,
+        CreatedAt
+    );
+
+    return {
+        id: Id,
+        key: Key,
+        name: data.name,
+        enabled: Boolean(Enabled),
+        rate_limit: RateLimit,
+        quota_limit: QuotaLimit,
+        usage_tokens: UsageTokens,
+        credit_limit: CreditLimit,
+        usage_cost: UsageCost,
+        allowed_models: AllowedModels,
+        created_at: CreatedAt
+    };
+}
+
 export function createAPIKeyDB(data: {
     name: string;
     enabled?: boolean;

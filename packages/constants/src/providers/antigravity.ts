@@ -44,6 +44,7 @@ export const ANTIGRAVITY_PROVIDER: ProviderMetadata = {
     name: "Google Antigravity",
     category: "oauth",
     protocol: "openai",
+    alias: "ag",
     base_url: ANTIGRAVITY_IDE_BASE_URL,
     web_url: "https://ai.google.dev",
     requires_api_key: false,

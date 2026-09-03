@@ -4,15 +4,22 @@ import {
     Activity,
     AlertCircle,
     CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    ChevronsDown,
+    ChevronsUp,
     Plus,
     RefreshCw,
     Shield,
-    Gauge
+    Gauge,
+    Search,
+    X
 } from "lucide-react";
 import { toast } from "sonner";
 import { QuotaSkeleton } from "@/components/skeletons";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ProviderIcon } from "@/components/ProviderIcon";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useQuota } from "@/hooks/useQuota";
 import type { LiveModelQuotaItem, ProviderQuotaAccount } from "@srouter/types";
@@ -72,6 +79,31 @@ function formatResetTimeDisplay(isoStr?: string): string | null {
     }
 }
 
+// Map upstream Antigravity internal quota names to requested standard display names
+function formatQuotaDisplayName(rawName: string): string {
+    const lower = rawName.toLowerCase();
+    if (lower.includes("gemini-3.7-flash") || lower.includes("gemini 3.7 flash")) {
+        return "gemini-3.7-flash-high";
+    }
+    if (lower.includes("claude opus 4.6") || lower.includes("claude-opus-4.6") || lower.includes("opus-4-6")) {
+        return "claude-opus-4.6";
+    }
+    return rawName;
+}
+
+// Check if quota item matches either of the target models
+function isTargetQuotaModel(quota: LiveModelQuotaItem): boolean {
+    const lower = quota.name.toLowerCase();
+    const isGemini37Flash =
+        lower.includes("gemini-3.7-flash") || lower.includes("gemini 3.7 flash");
+    const isClaudeOpus46 =
+        lower.includes("claude opus 4.6") ||
+        lower.includes("claude-opus-4.6") ||
+        lower.includes("opus-4-6");
+
+    return isGemini37Flash || isClaudeOpus46;
+}
+
 function QuotaItemRow({ quota }: { quota: LiveModelQuotaItem }) {
     const remaining = Math.max(
         0,
@@ -110,16 +142,17 @@ function QuotaItemRow({ quota }: { quota: LiveModelQuotaItem }) {
 
     const countdown = formatResetCountdown(quota.resetTime, quota.resetIn);
     const resetDisplay = formatResetTimeDisplay(quota.resetTime);
+    const displayName = formatQuotaDisplayName(quota.name);
 
     return (
         <div className="rounded-lg border border-border/70 bg-card/60 p-3.5 space-y-2.5 transition-all hover:border-border hover:bg-card">
             {/* Model Name & Percentage */}
-            <div className="flex items-center justify-between text-xs font-sans">
+            <div className="flex items-center justify-between text-xs font-sans gap-2">
                 <span
-                    className="font-medium text-foreground truncate max-w-[70%]"
-                    title={quota.name}
+                    className="font-medium font-mono text-foreground truncate"
+                    title={displayName}
                 >
-                    {quota.name}
+                    {displayName}
                 </span>
                 <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-xs">{emoji}</span>
@@ -167,15 +200,22 @@ function QuotaItemRow({ quota }: { quota: LiveModelQuotaItem }) {
 
 function AccountQuotaCard({
     account,
+    isExpanded,
+    onToggleExpand,
     onRefresh
 }: {
     account: ProviderQuotaAccount;
+    isExpanded: boolean;
+    onToggleExpand: () => void;
     onRefresh?: (name?: string) => Promise<void>;
 }) {
     const [refreshing, setRefreshing] = useState(false);
-    const quotas = account.quotas ?? [];
+    // Filter quotas to only show gemini-3.7-flash-high and claude-opus-4.6
+    const allQuotas = account.quotas ?? [];
+    const quotas = allQuotas.filter(isTargetQuotaModel);
 
-    const handleSingleRefresh = async () => {
+    const handleSingleRefresh = async (e: React.MouseEvent) => {
+        e.stopPropagation();
         if (!onRefresh || refreshing) return;
         setRefreshing(true);
         try {
@@ -191,16 +231,22 @@ function AccountQuotaCard({
     const healthyCount = quotas.length - exhaustedCount;
 
     return (
-        <div className="rounded-xl border border-border/80 bg-card p-5 space-y-4 shadow-xs transition-all hover:shadow-sm">
-            {/* Header: Provider Icon, Account Name, Badges & Refresh */}
-            <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3.5">
+        <div className="rounded-xl border border-border/80 bg-card shadow-xs transition-all hover:shadow-sm flex flex-col overflow-hidden">
+            {/* Header: Provider Icon, Account Name, Badges, Collapse Toggle & Refresh */}
+            <div
+                onClick={onToggleExpand}
+                className={cn(
+                    "flex items-center justify-between gap-3 p-4 cursor-pointer select-none transition-colors hover:bg-secondary/30",
+                    isExpanded && "border-b border-border/60"
+                )}
+            >
                 <div className="flex items-center gap-3 min-w-0">
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-secondary/80 p-2 shadow-2xs">
                         <ProviderIcon providerId={account.provider} className="size-6" />
                     </div>
                     <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-semibold text-sm text-foreground truncate max-w-[240px] sm:max-w-md">
+                            <h3 className="font-semibold text-sm text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-sm" title={account.account || account.provider}>
                                 {account.account || account.provider}
                             </h3>
                             <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-sans font-medium text-primary">
@@ -223,31 +269,47 @@ function AccountQuotaCard({
                     </div>
                 </div>
 
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={handleSingleRefresh}
-                    disabled={refreshing}
-                    className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer"
-                    title="Refresh this account's quota"
-                >
-                    <RefreshCw
-                        className={cn("size-4", refreshing ? "animate-spin text-primary" : "")}
-                    />
-                </Button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={handleSingleRefresh}
+                        disabled={refreshing}
+                        className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer"
+                        title="Refresh this account's quota"
+                    >
+                        <RefreshCw
+                            className={cn("size-4", refreshing ? "animate-spin text-primary" : "")}
+                        />
+                    </Button>
+                    <div
+                        className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                        title={isExpanded ? "Minimize account" : "Extend account"}
+                    >
+                        {isExpanded ? (
+                            <ChevronUp className="size-4" />
+                        ) : (
+                            <ChevronDown className="size-4" />
+                        )}
+                    </div>
+                </div>
             </div>
 
-            {/* Quota Items 2-Column Grid */}
-            {quotas.length === 0 ? (
-                <div className="py-6 text-center text-xs text-muted-foreground font-sans">
-                    No active quota limits returned for this account.
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {quotas.map((quota, idx) => (
-                        <QuotaItemRow key={`${quota.name}-${idx}`} quota={quota} />
-                    ))}
+            {/* Quota Items List when Expanded */}
+            {isExpanded && (
+                <div className="p-4 space-y-3 bg-card">
+                    {quotas.length === 0 ? (
+                        <div className="py-6 text-center text-xs text-muted-foreground font-sans">
+                            No active quota limits returned for gemini-3.7-flash-high or claude-opus-4.6 on this account.
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {quotas.map((quota, idx) => (
+                                <QuotaItemRow key={`${quota.name}-${idx}`} quota={quota} />
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -259,6 +321,10 @@ function QuotaPage() {
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
     const [isManualRefreshing, setIsManualRefreshing] = useState(false);
     const [filterProvider, setFilterProvider] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState<string>("");
+
+    // State for expanded accounts: Set of account IDs that are expanded
+    const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
 
     const handleRefresh = async (accountName?: string) => {
         setIsManualRefreshing(true);
@@ -280,7 +346,7 @@ function QuotaPage() {
 
     if (error || (!data && !isLoading)) {
         return (
-            <div className="mx-auto w-full max-w-6xl space-y-4">
+            <div className="mx-auto w-full max-w-7xl space-y-4">
                 <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-6 text-xs text-rose-500 space-y-2">
                     <p className="font-semibold text-sm">
                         Failed to load quota & limits information
@@ -301,13 +367,62 @@ function QuotaPage() {
     }
 
     const allProviders = data?.providers ?? [];
-    const quotaAccounts = allProviders.filter((p) => p.quotas && p.quotas.length > 0);
+    // Only keep accounts that have live quotas
+    const rawQuotaAccounts = allProviders.filter((p) => p.quotas && p.quotas.length > 0);
+
+    // Filter accounts and their quotas strictly to gemini-3.7-flash-high & claude-opus-4.6
+    const quotaAccounts = rawQuotaAccounts
+        .map((account) => ({
+            ...account,
+            quotas: (account.quotas || []).filter(isTargetQuotaModel)
+        }))
+        .filter((account) => account.quotas.length > 0);
 
     const providerTypes = Array.from(new Set(quotaAccounts.map((p) => p.provider)));
-    const filteredAccounts =
-        filterProvider === "all"
-            ? quotaAccounts
-            : quotaAccounts.filter((p) => p.provider === filterProvider);
+    
+    // Filter by provider and search term
+    const filteredAccounts = quotaAccounts.filter((account) => {
+        const matchesProvider = filterProvider === "all" || account.provider === filterProvider;
+        if (!matchesProvider) return false;
+
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase().trim();
+        const matchesAccount = (account.account || "").toLowerCase().includes(q);
+        const matchesProviderName = (account.provider || "").toLowerCase().includes(q);
+        const matchesAnyModel = (account.quotas || []).some((m) => {
+            const formatted = formatQuotaDisplayName(m.name).toLowerCase();
+            return m.name.toLowerCase().includes(q) || formatted.includes(q);
+        });
+        return matchesAccount || matchesProviderName || matchesAnyModel;
+    });
+
+    // Helper functions for expand / minimize
+    const isAccountExpanded = (id: string) => {
+        return expandedMap[id] !== undefined ? expandedMap[id] : true;
+    };
+
+    const toggleAccountExpand = (id: string) => {
+        setExpandedMap((prev) => ({
+            ...prev,
+            [id]: !isAccountExpanded(id)
+        }));
+    };
+
+    const expandAll = () => {
+        const newMap: Record<string, boolean> = {};
+        filteredAccounts.forEach((acc) => {
+            newMap[acc.id] = true;
+        });
+        setExpandedMap(newMap);
+    };
+
+    const minimizeAll = () => {
+        const newMap: Record<string, boolean> = {};
+        filteredAccounts.forEach((acc) => {
+            newMap[acc.id] = false;
+        });
+        setExpandedMap(newMap);
+    };
 
     let totalLiveQuotas = 0;
     let totalExhausted = 0;
@@ -333,7 +448,7 @@ function QuotaPage() {
     }
 
     return (
-        <div className="mx-auto w-full max-w-6xl flex flex-col gap-6">
+        <div className="mx-auto w-full max-w-7xl flex flex-col gap-6">
             {/* Header */}
             <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end border-b border-border/80 pb-5">
                 <div>
@@ -346,8 +461,7 @@ function QuotaPage() {
                         </span>
                     </div>
                     <p className="mt-1 max-w-2xl text-xs text-muted-foreground font-sans leading-relaxed">
-                        Real-time API quota limits and usage across your connected provider
-                        accounts.
+                        Real-time API quota limits and usage for <span className="font-mono font-medium text-foreground">gemini-3.7-flash-high</span> & <span className="font-mono font-medium text-foreground">claude-opus-4.6</span> across your connected provider accounts.
                     </p>
                 </div>
 
@@ -437,14 +551,15 @@ function QuotaPage() {
                 </div>
             </div>
 
-            {/* Filter Tabs if multiple provider types exist */}
-            {providerTypes.length > 1 && (
-                <div className="flex items-center gap-1.5 border-b border-border/60 pb-2 overflow-x-auto">
+            {/* Filter, Search & Extend/Minimize Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-border/60 pb-3">
+                {/* Provider Filter Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
                     <button
                         type="button"
                         onClick={() => setFilterProvider("all")}
                         className={cn(
-                            "rounded-lg px-3 py-1.5 text-xs font-medium font-sans transition-colors cursor-pointer",
+                            "rounded-lg px-3 py-1.5 text-xs font-medium font-sans transition-colors cursor-pointer shrink-0",
                             filterProvider === "all"
                                 ? "bg-primary text-primary-foreground font-semibold"
                                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -460,7 +575,7 @@ function QuotaPage() {
                                 type="button"
                                 onClick={() => setFilterProvider(type)}
                                 className={cn(
-                                    "rounded-lg px-3 py-1.5 text-xs font-medium font-sans transition-colors cursor-pointer capitalize",
+                                    "rounded-lg px-3 py-1.5 text-xs font-medium font-sans transition-colors cursor-pointer capitalize shrink-0",
                                     filterProvider === type
                                         ? "bg-primary text-primary-foreground font-semibold"
                                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -471,35 +586,90 @@ function QuotaPage() {
                         );
                     })}
                 </div>
-            )}
 
-            {/* Quota Accounts List */}
+                {/* Right Controls: Search + Expand All / Minimize All */}
+                <div className="flex items-center gap-2 shrink-0">
+                    <div className="relative flex-1 sm:w-56">
+                        <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Filter account or model…"
+                            className="h-8 pl-8 pr-7 text-xs rounded-lg border-border/80 bg-card font-sans placeholder:text-muted-foreground"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground hover:text-foreground inline-flex items-center justify-center cursor-pointer"
+                            >
+                                <X className="size-3" />
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-1 border-l border-border/60 pl-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={expandAll}
+                            className="h-8 text-[11px] px-2 text-muted-foreground hover:text-foreground cursor-pointer gap-1"
+                            title="Extend all account cards"
+                        >
+                            <ChevronsDown className="size-3.5" />
+                            <span className="hidden md:inline">Extend All</span>
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={minimizeAll}
+                            className="h-8 text-[11px] px-2 text-muted-foreground hover:text-foreground cursor-pointer gap-1"
+                            title="Minimize all account cards"
+                        >
+                            <ChevronsUp className="size-3.5" />
+                            <span className="hidden md:inline">Minimize All</span>
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Quota Accounts 2-Column Grid */}
             {filteredAccounts.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border/80 p-12 text-center space-y-3 bg-card/40">
                     <div className="flex size-10 items-center justify-center rounded-full bg-secondary mx-auto text-muted-foreground">
                         <Gauge className="size-5" />
                     </div>
                     <p className="text-sm font-semibold text-foreground">
-                        No Live Quota Accounts Found
+                        {searchQuery || filterProvider !== "all"
+                            ? "No matching quota accounts found"
+                            : "No Live Quota Accounts Found"}
                     </p>
                     <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-                        Connect Google Antigravity or Codex accounts via OAuth to automatically view
-                        live real-time token quotas and reset countdowns.
+                        {searchQuery || filterProvider !== "all"
+                            ? "Try adjusting your search query or provider filter."
+                            : "Connect Google Antigravity or Codex accounts via OAuth to automatically view live real-time token quotas and reset countdowns."}
                     </p>
-                    <Link
-                        to="/providers"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-xs font-semibold hover:bg-primary-active transition-all shadow-xs cursor-pointer mt-2"
-                    >
-                        <Plus className="size-3.5" />
-                        <span>Connect Antigravity Account</span>
-                    </Link>
+                    {!searchQuery && filterProvider === "all" && (
+                        <Link
+                            to="/providers"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-xs font-semibold hover:bg-primary-active transition-all shadow-xs cursor-pointer mt-2"
+                        >
+                            <Plus className="size-3.5" />
+                            <span>Connect Antigravity Account</span>
+                        </Link>
+                    )}
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                     {filteredAccounts.map((account) => (
                         <AccountQuotaCard
                             key={account.id}
                             account={account}
+                            isExpanded={isAccountExpanded(account.id)}
+                            onToggleExpand={() => toggleAccountExpand(account.id)}
                             onRefresh={handleRefresh}
                         />
                     ))}

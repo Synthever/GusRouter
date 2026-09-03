@@ -373,19 +373,27 @@ export class ProviderRegistry {
             }
         }
 
-        // 2. Prefix matching for provider ID or alias (e.g., qd/*, qoder/*, antigravity/*, openai/*)
+        // 2. Prefix matching for provider ID or alias (e.g., qd/*, qoder/*, antigravity/*, openai/*, kr/*, cx/*, ag/*)
         if (candidates.length === 0) {
             const prefix = modelId.includes("/") ? (modelId.split("/")[0] ?? modelId) : modelId;
             const targetBaseId = providerTypeForAlias(prefix) ?? prefix;
             for (const [id, provider] of this.providers.entries()) {
                 if (id === "default") continue;
-                const baseId = providerBaseId(id);
+                const baseId = providerBaseId(provider.id);
                 const alias = providerAlias(baseId);
+                const providerType = provider.id.split("_")[0]?.split("-")[0] ?? provider.id;
                 if (
-                    isProviderBaseId(id, prefix) ||
-                    isProviderBaseId(id, targetBaseId) ||
+                    isProviderBaseId(provider.id, prefix) ||
+                    isProviderBaseId(provider.id, targetBaseId) ||
+                    isProviderBaseId(baseId, targetBaseId) ||
                     prefix === alias ||
-                    targetBaseId === baseId
+                    targetBaseId === baseId ||
+                    prefix === baseId ||
+                    prefix === providerType ||
+                    targetBaseId === providerType ||
+                    (prefix === "kr" && (baseId === "kiro" || providerType === "kiro" || (provider as any).protocol === "custom")) ||
+                    (prefix === "cx" && (baseId === "openai_codex" || baseId === "openai" || providerType === "openai_codex" || providerType === "codex")) ||
+                    (prefix === "ag" && (baseId === "antigravity" || providerType === "antigravity"))
                 ) {
                     candidates.push(provider);
                 }

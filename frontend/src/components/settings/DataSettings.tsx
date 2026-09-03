@@ -15,7 +15,7 @@ import type { StorageStats } from "@/hooks/useSettings";
 
 interface DataSettingsProps {
     exportSettings: () => void;
-    importSettings: (json: string) => boolean;
+    importSettings: (json: string) => boolean | Promise<boolean>;
     clearPlaygroundHistory: () => void;
     resetToDefaults: () => void;
     getStorageStats: () => StorageStats;
@@ -65,15 +65,23 @@ export function DataSettings(props: DataSettingsProps) {
         reader.readAsText(file);
     };
 
-    const handleImport = () => {
+    const [isImporting, setIsImporting] = useState(false);
+
+    const handleImport = async () => {
         if (!importText.trim()) {
             toast.error("Please provide valid JSON");
             return;
         }
-        if (importSettings(importText)) {
-            setIsImportOpen(false);
-            setImportText("");
-            refresh();
+        setIsImporting(true);
+        try {
+            const success = await Promise.resolve(importSettings(importText));
+            if (success) {
+                setIsImportOpen(false);
+                setImportText("");
+                refresh();
+            }
+        } finally {
+            setIsImporting(false);
         }
     };
 
@@ -191,6 +199,7 @@ export function DataSettings(props: DataSettingsProps) {
                             variant="outline"
                             size="sm"
                             onClick={() => setIsImportOpen(false)}
+                            disabled={isImporting}
                         >
                             Cancel
                         </Button>
@@ -198,9 +207,10 @@ export function DataSettings(props: DataSettingsProps) {
                             type="button"
                             size="sm"
                             onClick={handleImport}
-                            className="font-semibold"
+                            disabled={isImporting}
+                            className="font-semibold cursor-pointer"
                         >
-                            Apply Import
+                            {isImporting ? "Importing..." : "Apply Import"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -17,7 +17,7 @@ export const OPENAI_CODEX_PROVIDER: ProviderMetadata = {
     name: "OpenAI Codex / ChatGPT",
     category: "oauth",
     protocol: "openai",
-    alias: "openai",
+    alias: "cx",
     web_url: "https://chatgpt.com",
     requires_api_key: false,
     requires_oauth: true,

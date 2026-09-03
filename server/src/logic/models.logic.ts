@@ -62,8 +62,17 @@ export class ModelsLogic {
             Merged.set(M.id.toLowerCase(), M);
         }
         for (const Row of Rows) {
-            const Alias = providerAlias(providerBaseId(Row.providerId));
-            const Id = `${Alias}/${Row.modelId}`;
+            // If modelId already has a slash (e.g. "kr/qwen3-coder-next"), keep it as is.
+            // If not, prepend provider alias.
+            let Id = Row.modelId;
+            let Alias = "custom";
+            if (Id.includes("/")) {
+                Alias = Id.split("/")[0] || "custom";
+            } else {
+                Alias = providerAlias(providerBaseId(Row.providerId));
+                Id = `${Alias}/${Row.modelId}`;
+            }
+
             if (ProviderFilter && !Alias.toLowerCase().startsWith(ProviderFilter.toLowerCase())) {
                 continue;
             }
