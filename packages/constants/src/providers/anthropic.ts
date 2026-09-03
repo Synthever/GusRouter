@@ -8,6 +8,20 @@ export const CLAUDE_OAUTH_SCOPE = "org:create_api_key user:profile user:inferenc
 export const CLAUDE_OAUTH_AUTHORIZE_URL = "https://claude.ai/oauth/authorize";
 export const CLAUDE_OAUTH_TOKEN_URL = "https://api.anthropic.com/v1/oauth/token";
 
+export const ANTHROPIC_MODELS = [
+    { id: "claude-sonnet-5", name: "Claude Sonnet 5" },
+    { id: "claude-sonnet-5-thinking", name: "Claude Sonnet 5 (Thinking)" },
+    { id: "claude-opus-5", name: "Claude Opus 5" },
+    { id: "claude-opus-5-thinking", name: "Claude Opus 5 (Thinking)" },
+    { id: "claude-haiku-4.5", name: "Claude Haiku 4.5" },
+    { id: "claude-haiku-4.5-thinking", name: "Claude Haiku 4.5 (Thinking)" },
+    { id: "claude-3-7-sonnet-20250219", name: "Claude 3.7 Sonnet" },
+    { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet" },
+    { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku" }
+];
+
+export const ANTHROPIC_MODEL_IDS = ANTHROPIC_MODELS.map((m) => m.id);
+
 export const ANTHROPIC_PROVIDER: ProviderMetadata = {
     id: "anthropic",
     name: "Anthropic Claude",

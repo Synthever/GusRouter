@@ -38,6 +38,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LogDetailSheet } from "@/components/logs/LogDetailSheet";
+import { GatewayTopologyMap } from "@/components/dashboard/GatewayTopologyMap";
 
 export const Route = createFileRoute("/usage")({
     staticData: { title: "Usage" },
@@ -258,6 +259,11 @@ function UsagePage() {
                             </div>
                             <p className="mt-1 text-[10.5px] text-muted-foreground">Estimated LLM pricing</p>
                         </Card>
+                    </div>
+
+                    {/* Gateway Topology Visualizer */}
+                    <div className="h-[480px] w-full">
+                        <GatewayTopologyMap />
                     </div>
 
                     {/* Chart Section */}
