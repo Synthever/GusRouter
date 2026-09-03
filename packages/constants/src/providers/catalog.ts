@@ -16,22 +16,8 @@ import { TOKENROUTER_PROVIDER } from "./tokenrouter.js";
 import type { ProviderMetadata } from "./types.js";
 
 export const KNOWN_PROVIDERS = [
-    KIRO_PROVIDER,
-    NEOSANTARA_PROVIDER,
-    GOROUTER_PROVIDER,
-    BLUESMINDS_PROVIDER,
-    SEEKAI_PROVIDER,
-    TABITOKEN_PROVIDER,
-    TOKENROUTER_PROVIDER,
-    OPENAI_CODEX_PROVIDER,
-    ANTHROPIC_PROVIDER,
     ANTIGRAVITY_PROVIDER,
-    COMMANDCODE_PROVIDER,
-    QODER_PROVIDER,
-    CODEBUDDY_PROVIDER,
-    CODEBUDDY_CN_PROVIDER,
-    OPENCODE_ZEN_PROVIDER,
-    BAI_PROVIDER
+    QODER_PROVIDER
 ] as const satisfies readonly ProviderMetadata[];
 
 export const KNOWN_PROVIDER_MAP = Object.freeze(
