@@ -5,6 +5,9 @@ import {
     getRecentLogsDB,
     getUsageByModelDB,
     getUsageSummaryDB,
+    getUsagePeriodStatsDB,
+    getRequestDetailsDB,
+    getAllAPIKeysDB,
     num
 } from "@srouter/db";
 import type {
@@ -12,7 +15,9 @@ import type {
     AnalyticsBucket,
     AnalyticsWindow,
     RequestLogEntry,
-    UsageStats
+    UsageStats,
+    UsagePeriodStats,
+    RequestDetailsResponse
 } from "@srouter/types";
 import { formatCost } from "@srouter/pricing";
 
@@ -101,6 +106,74 @@ export class LogsLogic {
                 estCost: num(m.estCost)
             })),
             providers: raw.providers
+        };
+    }
+
+    public static getUsagePeriodStats(period: string = "today"): UsagePeriodStats {
+        const stats = getUsagePeriodStatsDB(period);
+        const keys = getAllAPIKeysDB();
+        const keyMap = new Map<string, string>();
+        for (const k of keys) {
+            keyMap.set(k.id, k.name);
+        }
+
+        return {
+            ...stats,
+            byApiKey: stats.byApiKey.map((k) => ({
+                ...k,
+                apiKeyName: k.apiKeyId ? keyMap.get(k.apiKeyId) || `Key ${k.apiKeyId.slice(0, 8)}...` : "Direct / Admin"
+            }))
+        };
+    }
+
+    public static getRequestDetails(filter: {
+        page?: number;
+        pageSize?: number;
+        provider?: string;
+        model?: string;
+        apiKeyId?: string;
+        status?: string;
+        startDate?: string;
+        endDate?: string;
+    }): RequestDetailsResponse {
+        const { details, total } = getRequestDetailsDB(filter);
+        const keys = getAllAPIKeysDB();
+        const keyMap = new Map<string, string>();
+        for (const k of keys) {
+            keyMap.set(k.id, k.name);
+        }
+
+        const pageSize = Math.min(100, Math.max(1, filter.pageSize || 20));
+        const page = Math.max(1, filter.page || 1);
+
+        return {
+            details: details.map((d) => ({
+                id: d.id,
+                timestamp: d.createdAt,
+                model: d.model,
+                providerId: d.providerId,
+                apiKeyId: d.apiKeyId,
+                apiKeyName: d.apiKeyId ? keyMap.get(d.apiKeyId) || `Key ${d.apiKeyId.slice(0, 8)}...` : "Direct / Admin",
+                statusCode: d.statusCode,
+                latencyMs: d.latencyMs,
+                promptTokens: d.promptTokens,
+                completionTokens: d.completionTokens,
+                cachedTokens: d.cachedTokens || 0,
+                cacheCreationTokens: d.cacheCreationTokens || 0,
+                reasoningTokens: d.reasoningTokens || 0,
+                totalTokens: d.totalTokens,
+                estimatedCost: d.estimatedCost || 0,
+                fallbackOccurred: d.fallbackOccurred || false,
+                fallbackPath: d.fallbackPath,
+                fallbackReason: d.fallbackReason,
+                resolvedModel: d.resolvedModel
+            })),
+            pagination: {
+                page,
+                pageSize,
+                totalItems: total,
+                totalPages: Math.ceil(total / pageSize) || 1
+            }
         };
     }
 }

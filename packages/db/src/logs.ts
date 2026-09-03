@@ -381,3 +381,326 @@ export function getAnalyticsDB(window: AnalyticsWindow): AnalyticsDBResult {
         rps: Rps
     };
 }
+
+export function getUsagePeriodStatsDB(period: string = "today"): {
+    period: string;
+    totalRequests: number;
+    totalTokens: number;
+    totalPromptTokens: number;
+    totalCompletionTokens: number;
+    totalCachedTokens: number;
+    totalCost: number;
+    byModel: ModelUsageSummaryRow[];
+    byProvider: Array<{
+        providerId: string;
+        totalRequests: number;
+        totalTokens: number;
+        promptTokens: number;
+        completionTokens: number;
+        cachedTokens: number;
+        estimatedCost: number;
+        lastUsedAt: number | null;
+    }>;
+    byApiKey: Array<{
+        apiKeyId: string | null;
+        totalRequests: number;
+        totalTokens: number;
+        promptTokens: number;
+        completionTokens: number;
+        cachedTokens: number;
+        estimatedCost: number;
+        lastUsedAt: number | null;
+    }>;
+    chartData: Array<{
+        label: string;
+        timestamp?: number;
+        tokens: number;
+        cost: number;
+        requests: number;
+    }>;
+} {
+    const now = Date.now();
+    let since = 0;
+    let chartBucketCount = 24;
+    let chartBucketMs = 3600000;
+    let isDaily = false;
+
+    if (period === "today") {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        since = startOfDay.getTime();
+        chartBucketCount = 24;
+        chartBucketMs = 3600000;
+    } else if (period === "24h") {
+        since = now - 24 * 3600000;
+        chartBucketCount = 24;
+        chartBucketMs = 3600000;
+    } else if (period === "7d") {
+        since = now - 7 * 86400000;
+        chartBucketCount = 7;
+        chartBucketMs = 86400000;
+        isDaily = true;
+    } else if (period === "30d") {
+        since = now - 30 * 86400000;
+        chartBucketCount = 30;
+        chartBucketMs = 86400000;
+        isDaily = true;
+    } else if (period === "60d") {
+        since = now - 60 * 86400000;
+        chartBucketCount = 60;
+        chartBucketMs = 86400000;
+        isDaily = true;
+    } else {
+        // all
+        since = 0;
+        chartBucketCount = 30;
+        chartBucketMs = 86400000;
+        isDaily = true;
+    }
+
+    // 1. Overall Summary in period
+    const summaryQuery = db.prepare(`
+        SELECT 
+            COUNT(*) as totalRequests,
+            COALESCE(SUM(total_tokens), 0) as totalTokens,
+            COALESCE(SUM(prompt_tokens), 0) as totalPromptTokens,
+            COALESCE(SUM(completion_tokens), 0) as totalCompletionTokens,
+            COALESCE(SUM(cached_tokens), 0) as totalCachedTokens,
+            COALESCE(SUM(estimated_cost), 0) as totalEstimatedCost
+        FROM request_logs
+        WHERE created_at >= ?
+    `);
+    const summaryRow = summaryQuery.get(since) as any;
+
+    // 2. By Model
+    const modelQuery = db.prepare(`
+        SELECT 
+            model,
+            provider_id as providerId,
+            COUNT(*) as totalRequests,
+            COALESCE(SUM(total_tokens), 0) as totalTokens,
+            COALESCE(SUM(prompt_tokens), 0) as promptTokens,
+            COALESCE(SUM(completion_tokens), 0) as completionTokens,
+            COALESCE(SUM(cached_tokens), 0) as cachedTokens,
+            COALESCE(SUM(estimated_cost), 0) as estimatedCost,
+            MAX(created_at) as lastUsedAt
+        FROM request_logs
+        WHERE created_at >= ?
+        GROUP BY model, provider_id
+        ORDER BY totalRequests DESC
+    `);
+    const modelRows = modelQuery.all(since) as any[];
+
+    // 3. By Provider
+    const providerQuery = db.prepare(`
+        SELECT 
+            provider_id as providerId,
+            COUNT(*) as totalRequests,
+            COALESCE(SUM(total_tokens), 0) as totalTokens,
+            COALESCE(SUM(prompt_tokens), 0) as promptTokens,
+            COALESCE(SUM(completion_tokens), 0) as completionTokens,
+            COALESCE(SUM(cached_tokens), 0) as cachedTokens,
+            COALESCE(SUM(estimated_cost), 0) as estimatedCost,
+            MAX(created_at) as lastUsedAt
+        FROM request_logs
+        WHERE created_at >= ?
+        GROUP BY provider_id
+        ORDER BY totalRequests DESC
+    `);
+    const providerRows = providerQuery.all(since) as any[];
+
+    // 4. By API Key
+    const apiKeyQuery = db.prepare(`
+        SELECT 
+            api_key_id as apiKeyId,
+            COUNT(*) as totalRequests,
+            COALESCE(SUM(total_tokens), 0) as totalTokens,
+            COALESCE(SUM(prompt_tokens), 0) as promptTokens,
+            COALESCE(SUM(completion_tokens), 0) as completionTokens,
+            COALESCE(SUM(cached_tokens), 0) as cachedTokens,
+            COALESCE(SUM(estimated_cost), 0) as estimatedCost,
+            MAX(created_at) as lastUsedAt
+        FROM request_logs
+        WHERE created_at >= ?
+        GROUP BY api_key_id
+        ORDER BY totalRequests DESC
+    `);
+    const apiKeyRows = apiKeyQuery.all(since) as any[];
+
+    // 5. Chart Data
+    const chartData: Array<{ label: string; timestamp?: number; tokens: number; cost: number; requests: number }> = [];
+    if (period === "today") {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const startTime = startOfDay.getTime();
+        for (let i = 0; i < 24; i++) {
+            const bucketStart = startTime + i * 3600000;
+            const d = new Date(bucketStart);
+            const label = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+            chartData.push({ label, timestamp: bucketStart, tokens: 0, cost: 0, requests: 0 });
+        }
+    } else if (period === "24h") {
+        const startTime = now - 24 * 3600000;
+        for (let i = 0; i < 24; i++) {
+            const bucketStart = startTime + i * 3600000;
+            const d = new Date(bucketStart);
+            const label = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+            chartData.push({ label, timestamp: bucketStart, tokens: 0, cost: 0, requests: 0 });
+        }
+    } else {
+        const count = chartBucketCount;
+        const today = new Date();
+        for (let i = 0; i < count; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - (count - 1 - i));
+            d.setHours(0, 0, 0, 0);
+            const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            chartData.push({ label, timestamp: d.getTime(), tokens: 0, cost: 0, requests: 0 });
+        }
+    }
+
+    // Populate chart buckets from request_logs
+    const logsForChartQuery = db.prepare(`
+        SELECT created_at, prompt_tokens, completion_tokens, total_tokens, estimated_cost
+        FROM request_logs
+        WHERE created_at >= ?
+    `);
+    const chartLogRows = logsForChartQuery.all(since) as any[];
+
+    for (const row of chartLogRows) {
+        const ts = num(row.created_at);
+        if (period === "today" || period === "24h") {
+            const startTime = chartData[0]?.timestamp || since;
+            const idx = Math.floor((ts - startTime) / 3600000);
+            if (idx >= 0 && idx < chartData.length) {
+                chartData[idx].tokens += num(row.total_tokens);
+                chartData[idx].cost += num(row.estimated_cost);
+                chartData[idx].requests += 1;
+            }
+        } else {
+            const d = new Date(ts);
+            d.setHours(0, 0, 0, 0);
+            const dayTs = d.getTime();
+            const bucket = chartData.find(b => b.timestamp && Math.abs(b.timestamp - dayTs) < 43200000);
+            if (bucket) {
+                bucket.tokens += num(row.total_tokens);
+                bucket.cost += num(row.estimated_cost);
+                bucket.requests += 1;
+            }
+        }
+    }
+
+    return {
+        period,
+        totalRequests: num(summaryRow?.totalRequests),
+        totalTokens: num(summaryRow?.totalTokens),
+        totalPromptTokens: num(summaryRow?.totalPromptTokens),
+        totalCompletionTokens: num(summaryRow?.totalCompletionTokens),
+        totalCachedTokens: num(summaryRow?.totalCachedTokens),
+        totalCost: num(summaryRow?.totalEstimatedCost),
+        byModel: modelRows.map(r => ({
+            model: r.model,
+            providerId: r.providerId,
+            totalRequests: num(r.totalRequests),
+            totalTokens: num(r.totalTokens),
+            promptTokens: num(r.promptTokens),
+            completionTokens: num(r.completionTokens),
+            cachedTokens: num(r.cachedTokens),
+            estimatedCost: num(r.estimatedCost),
+            lastUsedAt: r.lastUsedAt ? num(r.lastUsedAt) : null
+        })),
+        byProvider: providerRows.map(r => ({
+            providerId: r.providerId,
+            totalRequests: num(r.totalRequests),
+            totalTokens: num(r.totalTokens),
+            promptTokens: num(r.promptTokens),
+            completionTokens: num(r.completionTokens),
+            cachedTokens: num(r.cachedTokens),
+            estimatedCost: num(r.estimatedCost),
+            lastUsedAt: r.lastUsedAt ? num(r.lastUsedAt) : null
+        })),
+        byApiKey: apiKeyRows.map(r => ({
+            apiKeyId: r.apiKeyId,
+            totalRequests: num(r.totalRequests),
+            totalTokens: num(r.totalTokens),
+            promptTokens: num(r.promptTokens),
+            completionTokens: num(r.completionTokens),
+            cachedTokens: num(r.cachedTokens),
+            estimatedCost: num(r.estimatedCost),
+            lastUsedAt: r.lastUsedAt ? num(r.lastUsedAt) : null
+        })),
+        chartData
+    };
+}
+
+export function getRequestDetailsDB(filter: {
+    page?: number;
+    pageSize?: number;
+    provider?: string;
+    model?: string;
+    apiKeyId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+}): {
+    details: RequestLogEntry[];
+    total: number;
+} {
+    const page = Math.max(1, filter.page || 1);
+    const pageSize = Math.min(100, Math.max(1, filter.pageSize || 20));
+    const offset = (page - 1) * pageSize;
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (filter.provider) {
+        conditions.push("provider_id = ?");
+        params.push(filter.provider);
+    }
+    if (filter.model) {
+        conditions.push("model LIKE ?");
+        params.push(`%${filter.model}%`);
+    }
+    if (filter.apiKeyId) {
+        conditions.push("api_key_id = ?");
+        params.push(filter.apiKeyId);
+    }
+    if (filter.status === "success") {
+        conditions.push("status_code >= 200 AND status_code < 300");
+    } else if (filter.status === "error") {
+        conditions.push("status_code >= 400");
+    }
+    if (filter.startDate) {
+        const startTs = new Date(filter.startDate).getTime();
+        if (!isNaN(startTs)) {
+            conditions.push("created_at >= ?");
+            params.push(startTs);
+        }
+    }
+    if (filter.endDate) {
+        const endTs = new Date(filter.endDate).getTime();
+        if (!isNaN(endTs)) {
+            conditions.push("created_at <= ?");
+            params.push(endTs);
+        }
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const countQuery = db.prepare(`SELECT COUNT(*) as total FROM request_logs ${whereClause}`);
+    const countRow = countQuery.get(...params) as { total: number };
+    const total = num(countRow?.total);
+
+    const dataQuery = db.prepare(`
+        SELECT * FROM request_logs 
+        ${whereClause} 
+        ORDER BY created_at DESC 
+        LIMIT ? OFFSET ?
+    `);
+    const rows = dataQuery.all(...params, pageSize, offset) as unknown as RequestLogRow[];
+
+    return {
+        details: rows.map(mapLogRow),
+        total
+    };
+}

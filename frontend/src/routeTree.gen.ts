@@ -19,6 +19,7 @@ import { Route as ProvidersRouteImport } from './routes/providers'
 import { Route as QuotaRouteImport } from './routes/quota'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TokenSaverRouteImport } from './routes/token-saver'
+import { Route as UsageRouteImport } from './routes/usage'
 import { Route as ProvidersIndexRouteImport } from './routes/providers/index'
 import { Route as ProvidersProviderIdRouteImport } from './routes/providers/$providerId'
 
@@ -72,6 +73,11 @@ const TokenSaverRoute = TokenSaverRouteImport.update({
   path: '/token-saver',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsageRoute = UsageRouteImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProvidersIndexRoute = ProvidersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/quota': typeof QuotaRoute
   '/settings': typeof SettingsRoute
   '/token-saver': typeof TokenSaverRoute
+  '/usage': typeof UsageRoute
   '/providers/$providerId': typeof ProvidersProviderIdRoute
   '/providers/': typeof ProvidersIndexRoute
 }
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/quota': typeof QuotaRoute
   '/settings': typeof SettingsRoute
   '/token-saver': typeof TokenSaverRoute
+  '/usage': typeof UsageRoute
   '/providers/$providerId': typeof ProvidersProviderIdRoute
   '/providers': typeof ProvidersIndexRoute
 }
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/quota': typeof QuotaRoute
   '/settings': typeof SettingsRoute
   '/token-saver': typeof TokenSaverRoute
+  '/usage': typeof UsageRoute
   '/providers/$providerId': typeof ProvidersProviderIdRoute
   '/providers/': typeof ProvidersIndexRoute
 }
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/quota'
     | '/settings'
     | '/token-saver'
+    | '/usage'
     | '/providers/$providerId'
     | '/providers/'
   fileRoutesByTo: FileRoutesByTo
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/quota'
     | '/settings'
     | '/token-saver'
+    | '/usage'
     | '/providers/$providerId'
     | '/providers'
   id:
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/quota'
     | '/settings'
     | '/token-saver'
+    | '/usage'
     | '/providers/$providerId'
     | '/providers/'
   fileRoutesById: FileRoutesById
@@ -180,6 +192,7 @@ export interface RootRouteChildren {
   QuotaRoute: typeof QuotaRoute
   SettingsRoute: typeof SettingsRoute
   TokenSaverRoute: typeof TokenSaverRoute
+  UsageRoute: typeof UsageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -254,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TokenSaverRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/usage': {
+      id: '/usage'
+      path: '/usage'
+      fullPath: '/usage'
+      preLoaderRoute: typeof UsageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/providers/': {
       id: '/providers/'
       path: '/'
@@ -296,6 +316,7 @@ const rootRouteChildren: RootRouteChildren = {
   QuotaRoute: QuotaRoute,
   SettingsRoute: SettingsRoute,
   TokenSaverRoute: TokenSaverRoute,
+  UsageRoute: UsageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

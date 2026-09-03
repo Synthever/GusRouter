@@ -46,6 +46,7 @@ export interface UsageByModelRow {
 
 export interface ModelUsageSummaryRow {
     model: string;
+    providerId?: string;
     totalRequests: number;
     totalTokens: number;
     promptTokens: number;
@@ -53,6 +54,77 @@ export interface ModelUsageSummaryRow {
     cachedTokens: number;
     estimatedCost: number;
     lastUsedAt: number | null;
+}
+
+export interface UsagePeriodStats {
+    period: string;
+    totalRequests: number;
+    totalTokens: number;
+    totalPromptTokens: number;
+    totalCompletionTokens: number;
+    totalCachedTokens: number;
+    totalCost: number;
+    byModel: ModelUsageSummaryRow[];
+    byProvider: Array<{
+        providerId: string;
+        totalRequests: number;
+        totalTokens: number;
+        promptTokens: number;
+        completionTokens: number;
+        cachedTokens: number;
+        estimatedCost: number;
+        lastUsedAt: number | null;
+    }>;
+    byApiKey: Array<{
+        apiKeyId: string | null;
+        apiKeyName?: string;
+        totalRequests: number;
+        totalTokens: number;
+        promptTokens: number;
+        completionTokens: number;
+        cachedTokens: number;
+        estimatedCost: number;
+        lastUsedAt: number | null;
+    }>;
+    chartData: Array<{
+        label: string;
+        timestamp?: number;
+        tokens: number;
+        cost: number;
+        requests: number;
+    }>;
+}
+
+export interface RequestDetailItem {
+    id: string;
+    timestamp: number;
+    model: string;
+    providerId: string;
+    apiKeyId?: string | null;
+    apiKeyName?: string;
+    statusCode: number;
+    latencyMs: number;
+    promptTokens: number;
+    completionTokens: number;
+    cachedTokens: number;
+    cacheCreationTokens: number;
+    reasoningTokens: number;
+    totalTokens: number;
+    estimatedCost: number;
+    fallbackOccurred: boolean;
+    fallbackPath?: string | null;
+    fallbackReason?: string | null;
+    resolvedModel?: string | null;
+}
+
+export interface RequestDetailsResponse {
+    details: RequestDetailItem[];
+    pagination: {
+        page: number;
+        pageSize: number;
+        totalItems: number;
+        totalPages: number;
+    };
 }
 
 export interface UsageStats extends UsageSummary {

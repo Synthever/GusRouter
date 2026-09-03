@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+    Activity,
     Boxes,
     Coins,
     Cpu,
@@ -37,6 +38,7 @@ const routingNavItems = [
     { to: "/providers", label: "Providers", icon: Boxes },
     { to: "/combo", label: "Combo", icon: GitFork },
     { to: "/token-saver", label: "Token Saver", icon: Coins },
+    { to: "/usage", label: "Usage", icon: Activity },
     { to: "/analytics", label: "Analytics", icon: BarChart2 },
     { to: "/quota", label: "Quotas & Limits", icon: Gauge },
     { to: "/logs", label: "Audit Logs", icon: ScrollText }
