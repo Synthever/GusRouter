@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -61,13 +61,28 @@ function fmtCost(n?: number) {
     return `$${(n || 0).toFixed(4)}`;
 }
 
+function timeAgoSeconds(timestamp?: number | null) {
+    if (!timestamp) return "Never";
+    const diffSec = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+    if (diffSec < 60) return `${diffSec}s ago`;
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    return `${Math.floor(diffSec / 86400)}d ago`;
+}
+
 function fmtTime(ts?: number | null) {
-    if (!ts) return "Never";
-    const diffMins = Math.floor((Date.now() - ts) / 60000);
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-    return new Date(ts).toLocaleDateString();
+    return timeAgoSeconds(ts);
+}
+
+function TimeAgoLive({ timestamp }: { timestamp?: number | null }) {
+    const [, setTick] = useState(0);
+
+    useEffect(() => {
+        const timer = setInterval(() => setTick((t) => t + 1), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    return <>{timeAgoSeconds(timestamp)}</>;
 }
 
 function UsagePage() {
@@ -303,8 +318,8 @@ function UsagePage() {
                                                             <span className="text-primary">{fmt(r.promptTokens)}↑</span>{" "}
                                                             <span className="text-emerald-500">{fmt(r.completionTokens)}↓</span>
                                                         </td>
-                                                        <td className="py-2 text-right text-muted-foreground text-[10px] whitespace-nowrap">
-                                                            {fmtTime(r.timestamp)}
+                                                        <td className="py-2 text-right text-muted-foreground text-[10px] whitespace-nowrap font-mono">
+                                                            <TimeAgoLive timestamp={r.timestamp} />
                                                         </td>
                                                     </tr>
                                                 );
