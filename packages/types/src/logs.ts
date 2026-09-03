@@ -93,6 +93,17 @@ export interface UsagePeriodStats {
         cost: number;
         requests: number;
     }>;
+    recentRequests?: Array<{
+        id: string;
+        model: string;
+        providerId: string;
+        promptTokens: number;
+        completionTokens: number;
+        cachedTokens: number;
+        statusCode: number;
+        timestamp: number;
+        latencyMs: number;
+    }>;
 }
 
 export interface RequestDetailItem {

@@ -53,6 +53,10 @@ export function AnthropicToOpenAIResponse(
         .map((c) => c.text ?? "")
         .join("");
 
+    const cachedTokens =
+        res.usage.cache_read_input_tokens || (res.usage as any).cached_tokens || 0;
+    const promptTokens = res.usage.input_tokens + (res.usage.cache_creation_input_tokens || 0);
+
     return {
         id: res.id,
         object: "chat.completion",
@@ -69,9 +73,16 @@ export function AnthropicToOpenAIResponse(
             }
         ],
         usage: {
-            prompt_tokens: res.usage.input_tokens,
+            prompt_tokens: promptTokens,
             completion_tokens: res.usage.output_tokens,
-            total_tokens: res.usage.input_tokens + res.usage.output_tokens
+            total_tokens: promptTokens + res.usage.output_tokens,
+            ...(cachedTokens > 0
+                ? {
+                      prompt_tokens_details: {
+                          cached_tokens: cachedTokens
+                      }
+                  }
+                : {})
         }
     };
 }

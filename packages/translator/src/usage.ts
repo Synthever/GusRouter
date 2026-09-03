@@ -52,18 +52,29 @@ export function ExtractUsageBreakdown(
     }
 
     const prompt_details = raw_usage.prompt_tokens_details as
-        { cached_tokens?: unknown } | undefined;
+        { cached_tokens?: unknown; cache_read_input_tokens?: unknown } | undefined;
     const completion_details = raw_usage.completion_tokens_details as
         { reasoning_tokens?: unknown } | undefined;
     const prompt_tokens = ExtractNumber(raw_usage.prompt_tokens);
     const completion_tokens = ExtractNumber(raw_usage.completion_tokens);
     const total_tokens = ExtractNumber(raw_usage.total_tokens);
 
+    // Support top-level or nested cached_tokens / cache_read_input_tokens across all providers
+    const cached_tokens =
+        ExtractNumber(prompt_details?.cached_tokens) ||
+        ExtractNumber(prompt_details?.cache_read_input_tokens) ||
+        ExtractNumber(raw_usage.cached_tokens) ||
+        ExtractNumber(raw_usage.cache_read_input_tokens);
+
+    const cache_creation_tokens =
+        ExtractNumber(raw_usage.cache_creation_input_tokens) ||
+        ExtractNumber(raw_usage.cache_creation_tokens);
+
     return {
         prompt_tokens,
         completion_tokens,
-        cached_tokens: ExtractNumber(prompt_details?.cached_tokens),
-        cache_creation_tokens: 0,
+        cached_tokens,
+        cache_creation_tokens,
         reasoning_tokens: ExtractNumber(completion_details?.reasoning_tokens),
         total_tokens: total_tokens || prompt_tokens + completion_tokens
     };

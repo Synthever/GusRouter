@@ -418,6 +418,17 @@ export function getUsagePeriodStatsDB(period: string = "today"): {
         cost: number;
         requests: number;
     }>;
+    recentRequests?: Array<{
+        id: string;
+        model: string;
+        providerId: string;
+        promptTokens: number;
+        completionTokens: number;
+        cachedTokens: number;
+        statusCode: number;
+        timestamp: number;
+        latencyMs: number;
+    }>;
 } {
     const now = Date.now();
     let since = 0;
@@ -590,6 +601,24 @@ export function getUsagePeriodStatsDB(period: string = "today"): {
         }
     }
 
+    // 6. Recent Requests
+    const recentRequestsQuery = db.prepare(`
+        SELECT 
+            id,
+            model,
+            provider_id as providerId,
+            prompt_tokens as promptTokens,
+            completion_tokens as completionTokens,
+            cached_tokens as cachedTokens,
+            status_code as statusCode,
+            created_at as timestamp,
+            latency_ms as latencyMs
+        FROM request_logs
+        ORDER BY created_at DESC
+        LIMIT 25
+    `);
+    const recentRequestsRows = recentRequestsQuery.all() as any[];
+
     return {
         period,
         totalRequests: num(summaryRow?.totalRequests),
@@ -619,7 +648,7 @@ export function getUsagePeriodStatsDB(period: string = "today"): {
             estimatedCost: num(r.estimatedCost),
             lastUsedAt: r.lastUsedAt ? num(r.lastUsedAt) : null
         })),
-        byApiKey: apiKeyRows.map(r => ({
+        byApiKey: apiKeyRows.map((r) => ({
             apiKeyId: r.apiKeyId,
             totalRequests: num(r.totalRequests),
             totalTokens: num(r.totalTokens),
@@ -629,7 +658,18 @@ export function getUsagePeriodStatsDB(period: string = "today"): {
             estimatedCost: num(r.estimatedCost),
             lastUsedAt: r.lastUsedAt ? num(r.lastUsedAt) : null
         })),
-        chartData
+        chartData,
+        recentRequests: recentRequestsRows.map(r => ({
+            id: r.id,
+            model: r.model,
+            providerId: r.providerId,
+            promptTokens: num(r.promptTokens),
+            completionTokens: num(r.completionTokens),
+            cachedTokens: num(r.cachedTokens),
+            statusCode: num(r.statusCode),
+            timestamp: num(r.timestamp),
+            latencyMs: num(r.latencyMs)
+        }))
     };
 }
 

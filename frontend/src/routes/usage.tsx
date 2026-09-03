@@ -134,9 +134,9 @@ function UsagePage() {
     }, [stats, groupBy, tableSearch]);
 
     return (
-        <div className="flex flex-col gap-6 font-mono">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 font-mono">
             {/* Header */}
-            <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end border-b border-border/80 pb-5">
+            <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end border-b border-border/80 pb-5">
                 <div className="min-w-0">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
                         Observability & Telemetry
@@ -150,15 +150,16 @@ function UsagePage() {
                 </div>
 
                 {/* Tab Switcher & Period Selector */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-secondary/30 p-0.5">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
+                    {/* View Switcher: Overview / Request Details */}
+                    <div className="grid grid-cols-2 sm:flex items-center gap-1 rounded-xl border border-border/70 bg-secondary/40 p-1 w-full sm:w-auto">
                         <button
                             type="button"
                             onClick={() => setActiveTab("overview")}
                             className={cn(
-                                "px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer",
+                                "flex items-center justify-center px-4 py-2 sm:py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                                 activeTab === "overview"
-                                    ? "bg-foreground text-background font-semibold shadow-2xs"
+                                    ? "bg-foreground text-background shadow-xs font-bold"
                                     : "text-muted-foreground hover:text-foreground"
                             )}
                         >
@@ -168,28 +169,29 @@ function UsagePage() {
                             type="button"
                             onClick={() => setActiveTab("details")}
                             className={cn(
-                                "px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer",
+                                "flex items-center justify-center px-4 py-2 sm:py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                                 activeTab === "details"
-                                    ? "bg-foreground text-background font-semibold shadow-2xs"
+                                    ? "bg-foreground text-background shadow-xs font-bold"
                                     : "text-muted-foreground hover:text-foreground"
                             )}
                         >
-                            Request Details
+                            Details
                         </button>
                     </div>
 
+                    {/* Time Range Filter */}
                     {activeTab === "overview" && (
-                        <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-secondary/30 p-0.5">
+                        <div className="grid grid-cols-5 sm:flex items-center gap-1 rounded-xl border border-border/70 bg-secondary/40 p-1 w-full sm:w-auto overflow-x-auto">
                             {PERIODS.map((p) => (
                                 <button
                                     key={p.value}
                                     type="button"
                                     onClick={() => setPeriod(p.value)}
                                     className={cn(
-                                        "px-2.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer",
+                                        "flex items-center justify-center px-3 py-2 sm:py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer text-center",
                                         period === p.value
-                                            ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
-                                            : "text-muted-foreground hover:text-foreground"
+                                            ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
                                     )}
                                 >
                                     {p.label}
@@ -202,68 +204,116 @@ function UsagePage() {
 
             {activeTab === "overview" && (
                 <>
-                    {/* Stat Metric Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                        <Card className="border-border/80 bg-card/60 p-4 shadow-2xs">
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
+                    {/* Stat Metric Cards (Full width vertical stack on mobile, 5-col on desktop) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                        <Card className="flex flex-col justify-between border-border/80 bg-card/70 p-4 sm:p-5 rounded-2xl shadow-2xs">
+                            <span className="text-xs sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                                 Total Requests
                             </span>
-                            <div className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+                            <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-mono">
                                 {fmt(stats?.totalRequests)}
                             </div>
-                            <p className="mt-1 text-[10.5px] text-muted-foreground">In selected period</p>
                         </Card>
 
-                        <Card className="border-border/80 bg-card/60 p-4 shadow-2xs">
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
-                                Input Tokens
+                        <Card className="flex flex-col justify-between border-border/80 bg-card/70 p-4 sm:p-5 rounded-2xl shadow-2xs">
+                            <span className="text-xs sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                                Total Input Tokens
                             </span>
-                            <div className="mt-2 text-2xl font-bold tracking-tight text-primary">
-                                {formatCompactNumber(stats?.totalPromptTokens || 0)}
+                            <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-primary font-mono truncate" title={fmt(stats?.totalPromptTokens)}>
+                                {fmt(stats?.totalPromptTokens)}
                             </div>
-                            <p className="mt-1 text-[10.5px] text-muted-foreground">
-                                {fmt(stats?.totalPromptTokens)} raw
-                            </p>
                         </Card>
 
-                        <Card className="border-border/80 bg-card/60 p-4 shadow-2xs">
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
+                        <Card className="flex flex-col justify-between border-border/80 bg-card/70 p-4 sm:p-5 rounded-2xl shadow-2xs">
+                            <span className="text-xs sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                                 Cached Tokens
                             </span>
-                            <div className="mt-2 text-2xl font-bold tracking-tight text-sky-500">
-                                {formatCompactNumber(stats?.totalCachedTokens || 0)}
+                            <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-sky-500 font-mono truncate" title={fmt(stats?.totalCachedTokens)}>
+                                {fmt(stats?.totalCachedTokens)}
                             </div>
-                            <p className="mt-1 text-[10.5px] text-muted-foreground">
-                                {fmt(stats?.totalCachedTokens)} prompt read
-                            </p>
                         </Card>
 
-                        <Card className="border-border/80 bg-card/60 p-4 shadow-2xs">
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
+                        <Card className="flex flex-col justify-between border-border/80 bg-card/70 p-4 sm:p-5 rounded-2xl shadow-2xs">
+                            <span className="text-xs sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                                 Output Tokens
                             </span>
-                            <div className="mt-2 text-2xl font-bold tracking-tight text-emerald-500">
-                                {formatCompactNumber(stats?.totalCompletionTokens || 0)}
+                            <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-emerald-500 font-mono truncate" title={fmt(stats?.totalCompletionTokens)}>
+                                {fmt(stats?.totalCompletionTokens)}
                             </div>
-                            <p className="mt-1 text-[10.5px] text-muted-foreground">
-                                {fmt(stats?.totalCompletionTokens)} generated
-                            </p>
                         </Card>
 
-                        <Card className="border-border/80 bg-card/60 p-4 shadow-2xs">
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
-                                Est. Cost
-                            </span>
-                            <div className="mt-2 text-2xl font-bold tracking-tight text-amber-500">
-                                {fmtCost(stats?.totalCost)}
+                        <Card className="flex flex-col justify-between border-border/80 bg-card/70 p-4 sm:p-5 rounded-2xl shadow-2xs">
+                            <div>
+                                <span className="text-xs sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                                    Est. Cost
+                                </span>
+                                <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-amber-500 font-mono">
+                                    ~{fmtCost(stats?.totalCost)}
+                                </div>
                             </div>
-                            <p className="mt-1 text-[10.5px] text-muted-foreground">Estimated LLM pricing</p>
+                            <p className="mt-1.5 text-[10px] text-muted-foreground">Estimated, not actual billing</p>
                         </Card>
                     </div>
 
-                    {/* Gateway Topology Visualizer */}
-                    <div className="h-[480px] w-full">
+                    {/* Provider Topology + Recent Requests */}
+                    <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
                         <GatewayTopologyMap />
+                        <Card className="flex min-w-0 flex-col overflow-hidden border-border/80 bg-card/70 p-4 rounded-2xl shadow-2xs" style={{ minHeight: 480, maxHeight: 520 }}>
+                            <div className="flex items-center justify-between pb-2.5 border-b border-border/50 shrink-0">
+                                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Recent Requests
+                                </span>
+                                <span className="text-[10px] text-muted-foreground font-mono">
+                                    {stats?.recentRequests?.length || 0} latest
+                                </span>
+                            </div>
+
+                            {!stats?.recentRequests?.length ? (
+                                <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs italic">
+                                    No requests yet.
+                                </div>
+                            ) : (
+                                <div className="flex-1 overflow-y-auto mt-2 pr-1 scrollbar-thin">
+                                    <table className="w-full border-collapse text-xs">
+                                        <thead className="sticky top-0 bg-card z-10">
+                                            <tr className="border-b border-border/40 text-[10px] uppercase text-muted-foreground">
+                                                <th className="py-1.5 text-left font-semibold w-3"></th>
+                                                <th className="py-1.5 text-left font-semibold">Model</th>
+                                                <th className="py-1.5 text-right font-semibold whitespace-nowrap">In / Out</th>
+                                                <th className="py-1.5 text-right font-semibold">When</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/30">
+                                            {stats.recentRequests.map((r, i) => {
+                                                const ok = !r.statusCode || (r.statusCode >= 200 && r.statusCode < 300);
+                                                return (
+                                                    <tr key={r.id || i} className="hover:bg-secondary/40 transition-colors">
+                                                        <td className="py-2 pr-1">
+                                                            <span
+                                                                className={cn(
+                                                                    "block w-2 h-2 rounded-full",
+                                                                    ok ? "bg-emerald-500 shadow-xs shadow-emerald-500/50" : "bg-red-500 shadow-xs shadow-red-500/50"
+                                                                )}
+                                                            />
+                                                        </td>
+                                                        <td className="py-2 font-mono text-[11px] truncate max-w-[130px]" title={r.model}>
+                                                            {r.model}
+                                                        </td>
+                                                        <td className="py-2 text-right font-mono text-[11px] whitespace-nowrap">
+                                                            <span className="text-primary">{fmt(r.promptTokens)}↑</span>{" "}
+                                                            <span className="text-emerald-500">{fmt(r.completionTokens)}↓</span>
+                                                        </td>
+                                                        <td className="py-2 text-right text-muted-foreground text-[10px] whitespace-nowrap">
+                                                            {fmtTime(r.timestamp)}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </Card>
                     </div>
 
                     {/* Chart Section */}
@@ -472,7 +522,7 @@ function UsagePage() {
             {activeTab === "details" && (
                 <div className="flex flex-col gap-4">
                     {/* Filters Toolbar */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-xl border border-border/80 bg-card/60 shadow-2xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 p-4 rounded-xl border border-border/80 bg-card/60 shadow-2xs">
                         <div>
                             <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground block mb-1">
                                 Search Model
