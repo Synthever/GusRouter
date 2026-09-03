@@ -257,6 +257,166 @@ export async function fetchCodeBuddyCNLiveQuota(
     };
 }
 
+interface QoderQuotaUsageResponse {
+    userId?: string;
+    userType?: string;
+    usageType?: string;
+    totalUsagePercentage?: number;
+    isQuotaExceeded?: boolean;
+    expiresAt?: number;
+    userQuota?: {
+        total?: number;
+        used?: number;
+        remaining?: number;
+        percentage?: number;
+        unit?: string;
+    };
+    orgResourcePackage?: {
+        total?: number;
+        used?: number;
+        remaining?: number;
+        percentage?: number;
+        unit?: string;
+    };
+}
+
+const qoderPatJobCache = new Map<string, { jobToken: string; expiresAt: number }>();
+
+async function exchangeQoderJobToken(pat: string): Promise<string> {
+    const cached = qoderPatJobCache.get(pat);
+    if (cached && cached.expiresAt - Date.now() > 5 * 60 * 1000) {
+        return cached.jobToken;
+    }
+
+    const res = await fetch("https://openapi.qoder.sh/api/v1/jobToken/exchange", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "User-Agent": "qodercli/1.0.0"
+        },
+        body: JSON.stringify({ personal_token: pat })
+    });
+
+    if (!res.ok) {
+        throw new Error(`Qoder PAT exchange failed: HTTP ${res.status}`);
+    }
+
+    const data = (await res.json()) as { token?: string; expires_in?: number; expires_at?: string };
+    if (!data.token) throw new Error("Qoder PAT exchange returned no token");
+
+    let expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    if (data.expires_in) expiresAt = Date.now() + data.expires_in;
+    else if (data.expires_at) expiresAt = new Date(data.expires_at).getTime() || expiresAt;
+
+    qoderPatJobCache.set(pat, { jobToken: data.token, expiresAt });
+    return data.token;
+}
+
+export async function fetchQoderLiveQuota(
+    providerId: string,
+    accountName: string,
+    rawToken: string,
+    enabled = true
+): Promise<ProviderQuotaAccount> {
+    if (!rawToken) {
+        throw new Error("Qoder quota requires an access token or PAT");
+    }
+
+    let activeToken = rawToken;
+    if (rawToken.startsWith("pt-")) {
+        activeToken = await exchangeQoderJobToken(rawToken);
+    }
+
+    const res = await fetch("https://openapi.qoder.sh/api/v2/quota/usage", {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${activeToken}`,
+            Accept: "application/json",
+            "User-Agent": "qodercli/1.0.0"
+        }
+    });
+
+    if (!res.ok) {
+        throw new Error(`Qoder quota fetch failed: HTTP ${res.status}`);
+    }
+
+    const data = (await res.json()) as QoderQuotaUsageResponse;
+    const expiresAtIso = data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined;
+    const resetIn = formatResetIn(expiresAtIso);
+
+    const Quotas: LiveModelQuotaItem[] = [];
+
+    if (data.userQuota && (data.userQuota.total || 0) > 0) {
+        const total = data.userQuota.total || 0;
+        const used = data.userQuota.used || 0;
+        const remaining = data.userQuota.remaining ?? total - used;
+        const remainingPct = total > 0 ? Math.round((remaining / total) * 100) : 0;
+
+        let status: "ok" | "warning" | "exhausted" = "ok";
+        if (remainingPct <= 5) status = "exhausted";
+        else if (remainingPct <= 20) status = "warning";
+
+        Quotas.push({
+            name: "Personal Credits",
+            used: Math.round(used * 100) / 100,
+            limit: Math.round(total * 100) / 100,
+            percentage: `${remainingPct}%`,
+            percentageValue: remainingPct,
+            resetIn,
+            resetTime: expiresAtIso,
+            status
+        });
+    }
+
+    if (data.orgResourcePackage && (data.orgResourcePackage.total || 0) > 0) {
+        const total = data.orgResourcePackage.total || 0;
+        const used = data.orgResourcePackage.used || 0;
+        const remaining = data.orgResourcePackage.remaining ?? total - used;
+        const remainingPct = total > 0 ? Math.round((remaining / total) * 100) : 0;
+
+        let status: "ok" | "warning" | "exhausted" = "ok";
+        if (remainingPct <= 5) status = "exhausted";
+        else if (remainingPct <= 20) status = "warning";
+
+        Quotas.push({
+            name: "Organization Credits",
+            used: Math.round(used * 100) / 100,
+            limit: Math.round(total * 100) / 100,
+            percentage: `${remainingPct}%`,
+            percentageValue: remainingPct,
+            resetIn,
+            resetTime: expiresAtIso,
+            status
+        });
+    }
+
+    if (Quotas.length === 0) {
+        const totalUsagePct = Math.round((data.totalUsagePercentage || 0) * 100);
+        const remainingPct = Math.max(0, 100 - totalUsagePct);
+        Quotas.push({
+            name: "Plan Quota",
+            used: totalUsagePct,
+            limit: 100,
+            percentage: `${remainingPct}%`,
+            percentageValue: remainingPct,
+            resetIn,
+            resetTime: expiresAtIso,
+            status: data.isQuotaExceeded ? "exhausted" : remainingPct <= 20 ? "warning" : "ok"
+        });
+    }
+
+    return {
+        id: providerId,
+        provider: "Qoder",
+        account: accountName,
+        enabled,
+        quotaType: "live_provider_quota",
+        totalQuotas: Quotas.length,
+        quotas: Quotas
+    };
+}
+
 export async function getProviderQuotaAccount(p: {
     id: string;
     providerId: string;
@@ -267,6 +427,8 @@ export async function getProviderQuotaAccount(p: {
 }): Promise<ProviderQuotaAccount> {
     const IsAntigravity =
         isProviderBaseId(p.providerId, "antigravity") || isProviderBaseId(p.id, "antigravity");
+    const IsQoder =
+        isProviderBaseId(p.providerId, "qoder") || isProviderBaseId(p.id, "qoder");
     const IsOpenAICodex =
         isProviderBaseId(p.providerId, "openai_codex") || isProviderBaseId(p.id, "openai_codex");
     const IsOpenAI = isProviderBaseId(p.providerId, "openai") || isProviderBaseId(p.id, "openai");
@@ -279,6 +441,15 @@ export async function getProviderQuotaAccount(p: {
         (isProviderBaseId(p.providerId, "codebuddy") || isProviderBaseId(p.id, "codebuddy"));
 
     const Token = p.accessToken || p.apiKey || "";
+
+    if (IsQoder) {
+        return await fetchQoderLiveQuota(
+            p.id,
+            p.name || "Qoder Account",
+            Token,
+            p.enabled
+        );
+    }
 
     if (IsCodeBuddy) {
         throw new Error("CodeBuddy (international) does not expose a live quota endpoint");

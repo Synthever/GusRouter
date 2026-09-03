@@ -79,7 +79,7 @@ function formatResetTimeDisplay(isoStr?: string): string | null {
     }
 }
 
-// Map upstream Antigravity internal quota names to requested standard display names
+// Map upstream Antigravity/Qoder internal quota names to requested standard display names
 function formatQuotaDisplayName(rawName: string): string {
     const lower = rawName.toLowerCase();
     if (lower.includes("gemini-3.7-flash") || lower.includes("gemini 3.7 flash")) {
@@ -91,7 +91,7 @@ function formatQuotaDisplayName(rawName: string): string {
     return rawName;
 }
 
-// Check if quota item matches either of the target models
+// Check if quota item matches target models
 function isTargetQuotaModel(quota: LiveModelQuotaItem): boolean {
     const lower = quota.name.toLowerCase();
     const isGemini37Flash =
@@ -100,8 +100,13 @@ function isTargetQuotaModel(quota: LiveModelQuotaItem): boolean {
         lower.includes("claude opus 4.6") ||
         lower.includes("claude-opus-4.6") ||
         lower.includes("opus-4-6");
+    const isQoderQuota =
+        lower.includes("credit") ||
+        lower.includes("personal") ||
+        lower.includes("organization") ||
+        lower.includes("plan");
 
-    return isGemini37Flash || isClaudeOpus46;
+    return isGemini37Flash || isClaudeOpus46 || isQoderQuota;
 }
 
 function QuotaItemRow({ quota }: { quota: LiveModelQuotaItem }) {
@@ -300,11 +305,11 @@ function AccountQuotaCard({
             {isExpanded && (
                 <div className="p-4 space-y-3 bg-card">
                     {quotas.length === 0 ? (
-                        <div className="py-6 text-center text-xs text-muted-foreground font-sans">
-                            No active quota limits returned for gemini-3.7-flash-high or claude-opus-4.6 on this account.
+                        <div className="p-8 text-center text-xs text-muted-foreground border border-dashed border-border/60 rounded-lg">
+                            No active quota limits returned on this account.
                         </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="divide-y divide-border/40">
                             {quotas.map((quota, idx) => (
                                 <QuotaItemRow key={`${quota.name}-${idx}`} quota={quota} />
                             ))}
@@ -461,7 +466,7 @@ function QuotaPage() {
                         </span>
                     </div>
                     <p className="mt-1 max-w-2xl text-xs text-muted-foreground font-sans leading-relaxed">
-                        Real-time API quota limits and usage for <span className="font-mono font-medium text-foreground">gemini-3.7-flash-high</span> & <span className="font-mono font-medium text-foreground">claude-opus-4.6</span> across your connected provider accounts.
+                        Real-time API quota limits, usage credits, and reset countdowns across your connected <span className="font-mono font-medium text-foreground">Antigravity</span> & <span className="font-mono font-medium text-foreground">Qoder</span> accounts.
                     </p>
                 </div>
 
